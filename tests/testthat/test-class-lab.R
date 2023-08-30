@@ -27,16 +27,16 @@ test_that("Lab$fasta_df() completes successfully", {
         ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
         sample_freq <- 1
         init_inf <- 6
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             init_inf = init_inf,
             inc_shape = 0,
             sample_schedule = "calendar", sample_freq = sample_freq
         )
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
         lab <- Lab$new()
 
-        lab$sample_hosts(pop$infectious_hosts(sample_freq), sample_freq)
+        lab$sample_hosts(grp$infectious_hosts(sample_freq), sample_freq)
         fasta_df <- lab$fasta_df()
 
         expect_setequal(names(fasta_df), c("name", "genome"))
@@ -55,20 +55,20 @@ test_that("Lab$hostdata_df() completes successfully", {
         ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
         sample_freq <- 1
         init_inf <- 6
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             init_inf = init_inf,
             inc_shape = 0,
             sample_schedule = "calendar", sample_freq = sample_freq
         )
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
         lab <- Lab$new()
 
-        lab$sample_hosts(pop$infectious_hosts(sample_freq), sample_freq)
+        lab$sample_hosts(grp$infectious_hosts(sample_freq), sample_freq)
         hostdata_df <- lab$hostdata_df()
 
         host_ids <- vapply(
-            pop$infectious_hosts(sample_freq),
+            grp$infectious_hosts(sample_freq),
             function(host) host$id,
             numeric(1L)
         )
@@ -97,15 +97,15 @@ test_that("Lab$sample_hosts() errors when invalid time given", {
     ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
     sample_freq <- 1
     init_inf <- 6
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         init_inf = 5
     )
     lab <- Lab$new()
 
-    expect_error(lab$sample_hosts(pop$infectious_hosts(), "a"))
-    expect_error(lab$sample_hosts(pop$infectious_hosts(), 1.2))
-    expect_error(lab$sample_hosts(pop$infectious_hosts(), c(1, 2)))
+    expect_error(lab$sample_hosts(grp$infectious_hosts(), "a"))
+    expect_error(lab$sample_hosts(grp$infectious_hosts(), 1.2))
+    expect_error(lab$sample_hosts(grp$infectious_hosts(), c(1, 2)))
 })
 
 test_that("Lab$sample_hosts() completes successfully when no hosts are passed", {
@@ -124,14 +124,14 @@ test_that("Lab$sample_hosts() completes successfully when hosts are passed", {
         ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
         sample_freq <- 1
         init_inf <- 6
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             init_inf = init_inf,
             inc_shape = 0,
             sample_schedule = "calendar", sample_freq = sample_freq
         )
         lab <- Lab$new()
-        lab$sample_hosts(pop$infectious_hosts(sample_freq), sample_freq)
+        lab$sample_hosts(grp$infectious_hosts(sample_freq), sample_freq)
 
         expect_equal(lab$num_wgs, init_inf)
     })
@@ -147,16 +147,16 @@ test_that("Lab$metadata_df() completes successfully", {
         ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
         sample_freq <- 1
         init_inf <- 6
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             init_inf = init_inf,
             inc_shape = 0,
             sample_schedule = "calendar", sample_freq = sample_freq
         )
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
         lab <- Lab$new()
 
-        lab$sample_hosts(pop$infectious_hosts(sample_freq), sample_freq)
+        lab$sample_hosts(grp$infectious_hosts(sample_freq), sample_freq)
         metadata_df <- lab$metadata_df()
 
         wgs_names <- vapply(
@@ -182,12 +182,12 @@ test_that("Lab$pick_strains() runs successfullly", {
 
     ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
     sample_freq <- 1
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         inc_shape = 0,
         sample_schedule = "calendar", sample_freq = sample_freq
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
     lab <- TestL$new()
 
     expect_setequal(lab$pick_strains_(host), host$strains)
@@ -204,10 +204,10 @@ test_that("Lab$sample_host() errors if host is not due for sampling", {
     )    
 
     ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
-    pop <- Population$new(1, ref_strain)
+    grp <- Group$new(1, ref_strain)
     lab <- TestL$new()
 
-    expect_error(lab$sample_host_(pop$susceptible_hosts()[[1]], 3))
+    expect_error(lab$sample_host_(grp$susceptible_hosts()[[1]], 3))
 })
 
 test_that("Lab$sample_host() errors if incorrect host object passed", {
@@ -232,12 +232,12 @@ test_that("Lab$sample_host() runs successfully", {
 
         ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
         sample_freq <- 1
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             inc_shape = 0,
             sample_schedule = "calendar", sample_freq = sample_freq
         )
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
         strain <- host$strains[[1]]
         lab <- TestL$new()
 

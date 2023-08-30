@@ -1,9 +1,9 @@
 Package: OOPidemic
-Title: Disease outbreak simulator
+Title: Object oriented epidemic simulator
 Version: 0.0.0.9000
 Authors@R: 
     person("Christopher", "Douglas", , "cda53@sfu.ca", role = c("aut", "cre"))
-Description: Simulator for a disease in single or multiple populations.
+Description: An object oriented programming approach to simulating an epidemic in homogenous or heterogenous populations.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

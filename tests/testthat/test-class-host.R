@@ -11,7 +11,7 @@ test_that("Host$new() errors when invalid id given", {
     expect_error(Host$new(id = c(1, 2)))
 })
 
-test_that("Host$new() errors when invalid population given", {
+test_that("Host$new() errors when invalid group given", {
     
     Class <- R6::R6Class("Class")
     class <- Class$new()
@@ -27,9 +27,9 @@ test_that("Host$contract_strains() errors when invalid infector given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
     strain <- Strain$new(ref_strain, 0)
-    pop <- Population$new(1, ref_strain)
-    infectee <- pop$susceptible_hosts()[[1]]
-    infector <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    infectee <- grp$susceptible_hosts()[[1]]
+    infector <- grp$susceptible_hosts()[[2]]
 
     Class <- R6::R6Class("Class")
     class <- Class$new()
@@ -41,9 +41,9 @@ test_that("Host$contract_strains() errors when invalid infector given", {
 test_that("Host$contract_strains() errors when invalid strains given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    infectee <- pop$susceptible_hosts()[[1]]
-    infector <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    infectee <- grp$susceptible_hosts()[[1]]
+    infector <- grp$infectious_hosts()[[1]]
 
     Class <- R6::R6Class("Class")
     class <- Class$new()
@@ -55,9 +55,9 @@ test_that("Host$contract_strains() errors when invalid freq given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
     strain <- Strain$new(ref_strain, 0)
-    pop <- Population$new(1, ref_strain)
-    infectee <- pop$susceptible_hosts()[[1]]
-    infector <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    infectee <- grp$susceptible_hosts()[[1]]
+    infector <- grp$infectious_hosts()[[1]]
 
     expect_error(infectee$contract_strains(infector, c(strain), c("a")))
     expect_error(infectee$contract_strains(infector, c(strain), c(1.5)))
@@ -67,9 +67,9 @@ test_that("Host$contract_strains() errors when strains and freq aren't the same 
 
     ref_strain <- ReferenceStrain$new("ref_strain")
     strain <- Strain$new(ref_strain, 0)
-    pop <- Population$new(1, ref_strain)
-    infectee <- pop$susceptible_hosts()[[1]]
-    infector <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    infectee <- grp$susceptible_hosts()[[1]]
+    infector <- grp$infectious_hosts()[[1]]
 
     expect_error(infectee$contract_strains(infector, c(strain), c(1, 2)))
 })
@@ -78,9 +78,9 @@ test_that("Host$contract_strains() errors when infectee is not prepared for infe
 
     ref_strain <- ReferenceStrain$new("ref_strain")
     strain <- Strain$new(ref_strain, 0)
-    pop <- Population$new(1, ref_strain)
-    infectee <- pop$susceptible_hosts()[[1]]
-    infector <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    infectee <- grp$susceptible_hosts()[[1]]
+    infector <- grp$infectious_hosts()[[1]]
 
     expect_error(infectee$contract_strains(infector, c(strain), c(1)))
 })
@@ -89,9 +89,9 @@ test_that("Host$contract_strains() errors when infectee is already infected", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
     strain <- Strain$new(ref_strain, 0)
-    pop <- Population$new(1, ref_strain, init_inf = 2)
-    infectee <- pop$infectious_hosts()[[1]]
-    infector <- pop$infectious_hosts()[[2]]
+    grp <- Group$new(1, ref_strain, init_inf = 2)
+    infectee <- grp$infectious_hosts()[[1]]
+    infector <- grp$infectious_hosts()[[2]]
 
     expect_error(infectee$contract_strains(infector, c(strain), c(1)))
 })
@@ -100,9 +100,9 @@ test_that("Host$contract_strains() runs successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
     strain <- Strain$new(ref_strain, 0)
-    pop <- Population$new(1, ref_strain)
-    infectee <- pop$susceptible_hosts()[[1]]
-    infector <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    infectee <- grp$susceptible_hosts()[[1]]
+    infector <- grp$infectious_hosts()[[1]]
     
     infectee$prepare_for_infection(1)
     strains <- c(strain)
@@ -122,9 +122,9 @@ test_that("Host$contract_strains() runs successfully", {
 test_that("Host$infect() errors when a non infectious host tries to infect someone", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    infector <- pop$susceptible_hosts()[[2]]
-    infectee <- pop$susceptible_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    infector <- grp$susceptible_hosts()[[2]]
+    infectee <- grp$susceptible_hosts()[[1]]
     time <- 3
 
     expect_error(infector$infect(infectee, time))
@@ -133,8 +133,8 @@ test_that("Host$infect() errors when a non infectious host tries to infect someo
 test_that("Host$infect() errors when invalid infectee object given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    infector <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    infector <- grp$infectious_hosts()[[1]]
 
     Class <- R6::R6Class("Class")
     class <- Class$new()
@@ -146,9 +146,9 @@ test_that("Host$infect() errors when invalid infectee object given", {
 test_that("Host$infect() errors when infectee hasn't been prepared for infection", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$susceptible_hosts()[[1]]
     time <- 3
 
     expect_error(infector$infect(infectee, time))
@@ -157,9 +157,9 @@ test_that("Host$infect() errors when infectee hasn't been prepared for infection
 test_that("Host$infect() errors when infectee hasn't been prepared for infection", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain, init_inf = 2)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$infectious_hosts()[[2]]
+    grp <- Group$new(1, ref_strain, init_inf = 2)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$infectious_hosts()[[2]]
     time <- 3
 
     expect_error(infector$infect(infectee, time))
@@ -168,9 +168,9 @@ test_that("Host$infect() errors when infectee hasn't been prepared for infection
 test_that("Host$infect() errors when invalid time given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain, init_inf = 2)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
+    grp <- Group$new(1, ref_strain, init_inf = 2)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$susceptible_hosts()[[1]]
     time <- 3
     infectee$prepare_for_infection(time)
 
@@ -182,9 +182,9 @@ test_that("Host$infect() errors when invalid time given", {
 test_that("Host$infect() completes successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain, init_inf = 2)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
+    grp <- Group$new(1, ref_strain, init_inf = 2)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$susceptible_hosts()[[1]]
     time <- 3
     infectee$prepare_for_infection(time)
 
@@ -213,8 +213,8 @@ test_that("Host$infect() completes successfully", {
 test_that("Host$is_exposed() errors invalid time given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
 
     expect_error(host$is_exposed("a"))
     expect_error(host$is_exposed(c(1, 2)))
@@ -223,9 +223,9 @@ test_that("Host$is_exposed() errors invalid time given", {
 test_that("Host$is_exposed() runs successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain, init_inf = 2)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
+    grp <- Group$new(1, ref_strain, init_inf = 2)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$susceptible_hosts()[[1]]
     
     time <- 15
     expect_false(infectee$is_exposed(time))
@@ -248,8 +248,8 @@ test_that("Host$is_exposed() runs successfully", {
 test_that("Host$is_infectious() errors invalid time given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
 
     expect_error(host$is_infectious("a"))
     expect_error(host$is_infectious(c(1, 2)))
@@ -258,9 +258,9 @@ test_that("Host$is_infectious() errors invalid time given", {
 test_that("Host$is_infectious() runs successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain, inc_shape = 0)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
+    grp <- Group$new(1, ref_strain, inc_shape = 0)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$susceptible_hosts()[[1]]
     
     time <- 15
     expect_false(infectee$is_infectious(time))
@@ -283,8 +283,8 @@ test_that("Host$is_infectious() runs successfully", {
 test_that("Host$is_recovered() errors invalid time given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
 
     expect_error(host$is_recovered("a"))
     expect_error(host$is_recovered(c(1, 2)))
@@ -293,9 +293,9 @@ test_that("Host$is_recovered() errors invalid time given", {
 test_that("Host$is_recovered() runs successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain, inc_shape = 0)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
+    grp <- Group$new(1, ref_strain, inc_shape = 0)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$susceptible_hosts()[[1]]
     
     time <- 15
     expect_false(infectee$is_recovered(time))
@@ -317,8 +317,8 @@ test_that("Host$is_recovered() runs successfully", {
 test_that("Host$is_sampling_due() errors invalid time given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
 
     expect_error(host$is_sampling_due("a"))
     expect_error(host$is_sampling_due(c(1, 2)))
@@ -330,14 +330,14 @@ test_that("Host$is_sampling_due() runs successfully", {
 
         ref_strain <- ReferenceStrain$new("ref_strain")
         sample_freq <- 5
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain, 
             inc_shape = 0,
             rec_shape = 20, rec_rate = 1,
             sample_schedule = "calendar", sample_freq = sample_freq
         )
-        infector <- pop$infectious_hosts()[[1]]
-        infectee <- pop$susceptible_hosts()[[1]]
+        infector <- grp$infectious_hosts()[[1]]
+        infectee <- grp$susceptible_hosts()[[1]]
         
         time <- 6
         expected_sample_time <- 10
@@ -362,8 +362,8 @@ test_that("Host$is_sampling_due() runs successfully", {
 test_that("Host$is_susceptible() errors invalid time given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
 
     expect_error(host$is_susceptible("a"))
     expect_error(host$is_susceptible(c(1, 2)))
@@ -372,9 +372,9 @@ test_that("Host$is_susceptible() errors invalid time given", {
 test_that("Host$is_susceptible() runs successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain, inc_shape = 0)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
+    grp <- Group$new(1, ref_strain, inc_shape = 0)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$susceptible_hosts()[[1]]
     
     time <- 15
     expect_true(infectee$is_susceptible(time))
@@ -396,8 +396,8 @@ test_that("Host$is_susceptible() runs successfully", {
 test_that("Host$prepare_for_infection() errors invalid time given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
 
     expect_error(host$prepare_for_infection("a"))
     expect_error(host$prepare_for_infection(1.2))
@@ -407,8 +407,8 @@ test_that("Host$prepare_for_infection() errors invalid time given", {
 test_that("Host$prepare_for_infection() errors invalid initial given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
 
     expect_error(host$prepare_for_infection("a"))
     expect_error(host$prepare_for_infection(c(TRUE, FALSE)))
@@ -417,7 +417,7 @@ test_that("Host$prepare_for_infection() errors invalid initial given", {
 test_that("Host$prepare_for_infection() errors when we attempt to prepare a non-susceptible host for infection", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
+    grp <- Group$new(1, ref_strain)
 
     expect_error(host$prepare_for_infection(1))
 })
@@ -425,16 +425,16 @@ test_that("Host$prepare_for_infection() errors when we attempt to prepare a non-
 test_that("Host$prepare_for_infection() runs successfully with initial = FALSE", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    TestP <- R6::R6Class("TestP", inherit = Population,
+    TestP <- R6::R6Class("TestP", inherit = Group,
         active = list(
             interval_stack = function() return(private$interval_stack_)
         )
     )
-    pop <- TestP$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[1]]
+    grp <- TestP$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[1]]
 
     time <- 5
-    intervals <- pop$interval_stack[1, ]
+    intervals <- grp$interval_stack[1, ]
     infector_interval <- host$prepare_for_infection(time)
 
     expect_equal(host$exposure_time, time)
@@ -451,16 +451,16 @@ test_that("Host$prepare_for_infection() runs successfully with initial = FALSE",
 test_that("Host$prepare_for_infection() runs successfully with initial = TRUE", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    TestP <- R6::R6Class("TestP", inherit = Population,
+    TestP <- R6::R6Class("TestP", inherit = Group,
         active = list(
             interval_stack = function() return(private$interval_stack_)
         )
     )
-    pop <- TestP$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[1]]
+    grp <- TestP$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[1]]
 
     time <- 5
-    intervals <- pop$interval_stack[1, ]
+    intervals <- grp$interval_stack[1, ]
     infector_interval <- host$prepare_for_infection(time, TRUE)
 
     expect_equal(host$exposure_time, time)
@@ -481,8 +481,8 @@ test_that("Host$prepare_for_infection() runs successfully with initial = TRUE", 
 test_that("Host$realise() errors invalid time given", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
 
     expect_error(host$realise("a"))
     expect_error(host$realise(1.2))
@@ -492,8 +492,8 @@ test_that("Host$realise() errors invalid time given", {
 test_that("Host$realise() runs successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$susceptible_hosts()[[2]]
     
     time <- 15
     host$realise(time)
@@ -508,8 +508,8 @@ test_that("Host$realise() runs successfully", {
 test_that("Host$realise() runs successfully with random sample_schedule", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$infectious_hosts()[[1]]
 
     sample_time <- host$sample_time
     host$update_sample_time()
@@ -522,12 +522,12 @@ test_that("Host$realise() runs successfully with calendar sample_schedule", {
     withr::with_seed(1234, {
         ref_strain <- ReferenceStrain$new("ref_strain")
         sample_freq <- 5
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             sample_schedule = "calendar", sample_freq = sample_freq,
             rec_shape = 11
         )
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
 
         sample_time <- host$sample_time
         host$update_sample_time()
@@ -543,12 +543,12 @@ test_that("Host$realise() runs successfully with individual sample_schedule", {
     withr::with_seed(1234, {
         ref_strain <- ReferenceStrain$new("ref_strain")
         sample_freq <- 5
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             sample_schedule = "individual", sample_freq = sample_freq,
             rec_shape = 11
         )
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
 
         sample_time <- host$sample_time
         host$update_sample_time()
@@ -566,10 +566,10 @@ test_that("Host$realise() runs successfully with individual sample_schedule", {
 test_that("Host$is_index() completes successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
-    host <- pop$susceptible_hosts()[[2]]
+    grp <- Group$new(1, ref_strain)
+    infector <- grp$infectious_hosts()[[1]]
+    infectee <- grp$susceptible_hosts()[[1]]
+    host <- grp$susceptible_hosts()[[2]]
 
     time <- 3
     infectee$prepare_for_infection(time)
@@ -593,12 +593,12 @@ test_that("Host$calendar_sample_time() completes successfully on an index case",
         )
     )
     sample_freq <- 5
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         sample_freq = sample_freq,
         host_class = TestH
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
 
     expect_equal(host$calendar_sample_time_(), sample_freq)
 })  
@@ -613,13 +613,13 @@ test_that("Host$calendar_sample_time() completes successfully on a non-index cas
             )
         )
         sample_freq <- 5
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             inc_shape = 0,
             sample_freq = sample_freq,
             host_class = TestH
         )
-        host <- pop$susceptible_hosts()[[1]]
+        host <- grp$susceptible_hosts()[[1]]
         time <- sample_freq * 2 - 1
         host$prepare_for_infection(time)
 
@@ -639,11 +639,11 @@ test_that("Host$generate_recovery_time() completes successfully on an index case
             generate_recovery_time_ = function() return(private$generate_recovery_time())
         )
     )
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         host_class = TestH
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
 
     expect_gte(host$generate_recovery_time_(), host$infectious_time)
 })  
@@ -663,18 +663,18 @@ test_that("Host$generate_sample_time() completes successfully with individual sa
             )
         )
         sample_freq <- 2
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             host_class = TestH,
             rec_shape = 5,
             sample_schedule = "individual", sample_freq = sample_freq
         )
 
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
         expect_equal(host$generate_sample_time_(), host$individual_sample_time_())
 
         new_sample_freq <- 200
-        pop$sample_freq <- new_sample_freq
+        grp$sample_freq <- new_sample_freq
         expect_equal(host$generate_sample_time_(), Inf)
     })  
 })  
@@ -690,14 +690,14 @@ test_that("Host$generate_sample_time() completes successfully with calendar samp
             )
         )
         sample_freq <- 2
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             host_class = TestH,
             rec_shape = 5,
             sample_schedule = "calendar", sample_freq = sample_freq
         )
 
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
         expect_equal(host$generate_sample_time_(), host$calendar_sample_time_())
     })  
 })  
@@ -712,14 +712,14 @@ test_that("Host$generate_sample_time() completes successfully with random sample
                 random_sample_time_ = function() return(private$random_sample_time())
             )
         )
-        pop <- Population$new(
+        grp <- Group$new(
             1, ref_strain,
             host_class = TestH,
             rec_shape = 5,
             sample_schedule = "random"
         )
 
-        host <- pop$infectious_hosts()[[1]]
+        host <- grp$infectious_hosts()[[1]]
         expect_equal(host$generate_sample_time_(), host$random_sample_time_())
     })  
 })  
@@ -737,12 +737,12 @@ test_that("Host$individual_sample_time() completes successfully", {
         )
     )
     sample_freq <- 5
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         sample_freq = sample_freq,
         host_class = TestH
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
 
     expect_equal(host$individual_sample_time_(), host$infectious_time + sample_freq)
 })  
@@ -760,12 +760,12 @@ test_that("Host$random_sample_time() completes successfully", {
         )
     )
     sample_freq <- 5
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         sample_freq = sample_freq,
         host_class = TestH
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
     sample_time <- host$random_sample_time_()
 
     expect_true(host$infectious_time <= sample_time)

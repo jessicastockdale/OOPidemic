@@ -2,468 +2,298 @@
 # Method: Population$new()
 ###############################################################################
 
-test_that("Population$new() errors when invalid id given", {
-    
-    expect_error(Population$new(id = "a"))
-    expect_error(Population$new(id = 1.5))
-    expect_error(Population$new(id = c(1, 2)))
+test_that("Population$new() errors when an invalid group is given", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    Class <- R6::R6Class("Class")
+    grps <- c(
+        Group$new(2, ref_strain),
+        class <- Class$new()
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+
+    expect_error(Population$new(grps, inf_rates, lab))
 })
 
-test_that("Population$new() errors when invalid ref_strain object given", {
+test_that("Population$new() errors when an invalid group ids are used", {
 
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    groups_1 <- c(
+        Group$new(1, ref_strain),
+        Group$new(1, ref_strain)
+    )
+    groups_2 <- c(
+        Group$new(1, ref_strain),
+        Group$new(0, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+
+    expect_error(Population$new(groups_1, inf_rates, lab))
+    expect_error(Population$new(groups_2, inf_rates, lab))
+})
+
+test_that("Population$new() errors when an invalid inf_rate is given", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    lab <- Lab$new()
+
+    expect_error(Population$new(grps, matrix(rep(1, 4), ncol = 1), lab))
+    expect_error(Population$new(grps, matrix(rep(1, 4), ncol = 4), lab))
+    expect_error(Population$new(grps, matrix(rep("a", 2), ncol = 4), lab))
+    expect_error(Population$new(grps, matrix(rep(-1, 2), ncol = 4), lab))
+})
+
+test_that("Population$new() errors when an invalid lab is given", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
     Class <- R6::R6Class("Class")
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
     class <- Class$new()
-
-    expect_error(Population$new(1, ref_strain = class))
-    expect_error(Population$new(1, ref_strain = 3))
-})
-
-test_that("Population$new() errors when invalid init_sus given", {
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
     
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(1, ref_strain, init_sus = "a"))
-    expect_error(Population$new(1, ref_strain, init_sus = 1.5))
-    expect_error(Population$new(1, ref_strain, init_sus = c(1, 2)))
-})
-
-test_that("Population$new() errors when invalid init_inf given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(1, ref_strain, init_inf = "a"))
-    expect_error(Population$new(1, ref_strain, init_inf = 1.5))
-    expect_error(Population$new(1, ref_strain, init_inf = c(1, 2)))
-})
-
-test_that("Population$new() errors when invalid inf_rate given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(1, ref_strain, inf_rate = "a"))
-    expect_error(Population$new(1, ref_strain, inf_rate = 0))
-    expect_error(Population$new(1, ref_strain, inf_rate = c(1, 2)))
-})
-
-test_that("Population$new() errors when invalid find_infector_method given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(1, ref_strain, find_infector_method = "a"))
-})
-
-test_that("Population$new() errors when invalid transmission interval gamma parameters given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(1, ref_strain, trans_int_shape = "a"))
-    expect_error(Population$new(1, ref_strain, trans_int_shape = 0))
-    expect_error(Population$new(1, ref_strain, trans_int_shape = c(1, 2)))
-    expect_error(Population$new(1, ref_strain, trans_int_rate = "a"))
-    expect_error(Population$new(1, ref_strain, trans_int_rate = 0))
-    expect_error(Population$new(1, ref_strain, trans_int_rate = c(1, 2)))
-})
-
-test_that("Population$new() errors when invalid serial interval gamma parameters given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "serial",
-        si_shape = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "serial",
-        si_shape = 0
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "serial",
-        si_shape = c(1, 2)))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "serial",
-        si_shape = 6, si_rate = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "serial",
-        si_shape = 6, si_rate = 0
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "serial",
-        si_shape = 6, si_rate = c(1, 2)))
-})
-
-test_that("Population$new() errors when invalid generation_interval gamma parameters given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "generation",
-        gt_shape = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "generation",
-        gt_shape = 0
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "generation",
-        gt_shape = c(1, 2)))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "generation",
-        gt_shape = 6, gt_rate = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "generation",
-        gt_shape = 6, gt_rate = 0
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        find_infector_method = "generation",
-        gt_shape = 6, gt_rate = c(1, 2)))
-})
-
-test_that("Population$new() errors when invalid incubation gamma parameters given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        inc_shape = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        inc_shape = -1
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        inc_shape = c(1, 2)
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        inc_shape = 6, inc_rate = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        inc_shape = 6, inc_rate = 0
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        inc_shape = 6, inc_rate = c(1, 2)
-    ))
-})
-
-test_that("Population$new() errors when invalid recovery gamma parameters given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        rec_shape = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        rec_shape = 0
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        rec_shape = c(1, 2)
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        rec_shape = 6, rec_rate = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        rec_shape = 6, rec_rate = 0
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        rec_shape = 6, rec_rate = c(1, 2)
-    ))
-})
-
-test_that("Population$new() errors when invalid initial distances given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        max_init_dist = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        max_init_dist = 1.5
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        max_init_dist = c(1, 2)
-    ))
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        max_init_dist = 200, min_init_dist = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        max_init_dist = 200, min_init_dist = 1.5
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        max_init_dist = 200, min_init_dist = c(1, 2)
-    ))
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        max_init_dist = 20, min_init_dist = 21
-    ))
-
-})
-
-test_that("Population$new() errors when invalid sample schedule and frequency given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        sample_schedule = "a"
-    ))
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        sample_schedule = "individual",
-        sample_frequency = "a"
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        sample_schedule = "individual",
-        sample_frequency = 1.5
-    ))
-    expect_error(Population$new(
-        1, ref_strain, 
-        sample_schedule = "individual",
-        sample_frequency = c(1, 2)
-    ))
-
-})
-
-test_that("Population$new() errors when invalid Host class given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    Class <- R6::R6Class("Class")
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        host_class = Class
-    ))
-
-})
-
-test_that("Population$new() errors when invalid Strain class given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    Class <- R6::R6Class("Class")
-
-    expect_error(Population$new(
-        1, ref_strain, 
-        strain_class = Class
-    ))
-
+    expect_error(Population$new(grps, inf_rates, class))
 })
 
 test_that("Population$new() successfully completes", {
-    
+
     ref_strain <- ReferenceStrain$new("ref_strain")
-    TestP <- R6::R6Class("TestP", inherit = Population,
-        active = list(interval_stack = function() private$interval_stack_)
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
     )
-    TestH <- R6::R6Class("TestH", inherit = Host,
-        public = list(
-            calendar_sample_time_ = function() return(private$calendar_sample_time())
-        )
-    )
-    TestS <- R6::R6Class("TestS", inherit = Strain,
-        public = list(
-            calendar_sample_time_ = function() return(private$calendar_sample_time())
-        )
-    )
-
-
-    init_sus <- 95
-    init_inf <- 5
-    pop <- TestP$new(
-        id = 1,
-        ref_strain,
-        host_class = TestH,
-        strain_class = TestS
-    )
-
-    expect_false(is.null(pop$interval_stack))
-    expect_length(pop$hosts, init_sus + init_inf)
-})
-
-###############################################################################
-# Method: Population$exposed_hosts()
-###############################################################################
-
-test_that("Population$exposed_hosts() errors when invalid time given", {
+    lab <- Lab$new()
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
     
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
+    population <- Population$new(grps, inf_rates, lab)
 
-
-    expect_error(pop$exposed_hosts("a"))
-    expect_error(pop$exposed_hosts(1.5))
-    expect_error(pop$exposed_hosts(c(1, 2)))
-})
-
-test_that("Population$exposed_hosts() successfully completes", {
-    
-    withr::with_seed(1234, {
-    
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        pop <- Population$new(1, ref_strain, inf_rate = 2)
-        # trigger an infection so there are exposed hosts
-        pop$infect()
-
-        expected <- c()
-        for (host in pop$hosts) {
-            if (host$is_exposed(pop$time)) {
-                expected <- c(expected, host)
-            }
-        }
-
-        expect_setequal(pop$exposed_hosts(), expected)
-    })
+    expect_identical(population$lab, lab)
 })
 
 ###############################################################################
 # Method: Population$get_infectees()
 ###############################################################################
 
-test_that("Population$get_infectees() errors when invalid num_infectees given", {
-    
+test_that("Population$get_infectees() errors when an invalid num_infectees is given", {
+
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-
-
-    expect_error(pop$get_infectees("a"))
-    expect_error(pop$get_infectees(1.5))
-    expect_error(pop$get_infectees(c(1, 2)))
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+    
+    expect_error(population$get_infectees(c("a", "b")))
+    expect_error(population$get_infectees(c(1.2, 3)))
+    expect_error(population$get_infectees(c(1)))
 })
 
 test_that("Population$get_infectees() successfully completes", {
-    
+
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
 
-    num_infectees <- 5
-    infectees <- pop$get_infectees(num_infectees)
+    num_infectees <- c(2, 3)
+    infectees <- population$get_infectees(num_infectees)
 
-    expect_length(infectees, num_infectees)
-    expect_length(unique(infectees), num_infectees) # check there's no duplicates
-    # check they are all susceptible
-    expect_true(all(
-        vapply(
-            infectees, 
-            function(infectee) infectee$is_susceptible(pop$time), 
+    expect_length(infectees, length(num_infectees))
+    expect_true(all(vapply(
+        seq_along(num_infectees),
+        function(i) length(infectees[[i]]) == num_infectees[[i]],
+        logical(1L)
+    )))
+    expect_true(all(vapply(
+        infectees,
+        function(infs) all(vapply(
+            infs, 
+            function(inf) inf$is_susceptible(population$time),
             logical(1L)
-        )
-    ))
+        )),
+        logical(1L)
+    )))
 })
 
 ###############################################################################
 # Method: Population$get_infectors()
 ###############################################################################
 
-test_that("Population$get_infectors() errors when invalid num_infectees given", {
-    
+test_that("Population$get_infectors() errors when an invalid num_infectees is given", {
+
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+    
+    expect_error(population$get_infectors(c("a", "b"), c(1, 2)))
+    expect_error(population$get_infectors(c(1.2, 3), c(1, 2)))
+    expect_error(population$get_infectors(c(3), c(1)))
 
-
-    expect_error(pop$get_infectors("a"))
-    expect_error(pop$get_infectors(c()))
 })
 
-test_that("Population$get_infectors() successfully completes with a single infective", {
-    withr::with_seed(1234, {
-    
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        pop <- Population$new(1, ref_strain)
+test_that("Population$get_infectors() errors when an invalid infector_intervals is given", {
 
-        intervals <- c(1:5)
-        infectors <- pop$get_infectors(intervals)
-        expect_length(unique(infectors), 1)
-        expect_true(unique(infectors)[[1]]$is_infectious(pop$time))
-    })
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+    
+    expect_error(population$get_infectors(c(1), c("A")))
+    expect_error(population$get_infectors(c(1), c(-1)))
+
 })
 
-test_that("Population$get_infectors() successfully completes using random infector method", {
-    withr::with_seed(1234, {
+test_that("Population$get_infectors() errors when an incompatible group_of_infectors and infector_intervals is given", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
     
+    expect_error(population$get_infectors(c(1, 2), c(-1)))
+
+})
+
+test_that("Population$get_infectors() completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    grps <- c(
+        Group$new(1, ref_strain, find_infector_method = "random"),
+        Group$new(2, ref_strain, find_infector_method = "random")
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+    
+    group_of_infs <- c(1, 2, 1)
+    inf_ints <- c(0, 0, 0)
+    infectors <- population$get_infectors(group_of_infs, inf_ints)
+
+    expect_true(all(vapply(
+        seq_along(group_of_infs),
+        function(i) {all(
+            infectors[[i]]$group$id == group_of_infs[[i]],
+            infectors[[i]]$is_infectious(population$time)
+        )},
+        logical(1L)
+    )))
+})
+
+###############################################################################
+# Method: Population$get_group_of_infectors()
+###############################################################################
+
+test_that("Population$get_group_of_infectors() errors when an invalid num_infectees is given", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+ 
+    fois_mat <- matrix(rep(0.5, 4), ncol = 2)
+    
+    expect_error(population$get_group_of_infectors(c("a", "b"), fois_mat))
+    expect_error(population$get_group_of_infectors(c(1.2, 3), fois_mat))
+    expect_error(population$get_group_of_infectors(c(3), fois_mat))
+
+})
+
+test_that("Population$get_group_of_infectors() errors when an invalid fois_mat is given", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+
+    
+    expect_error(
+        population$get_group_of_infectors(
+            c(1, 2), matrix(rep(0.5, 4), ncol = 4)
+    ))
+    expect_error(
+        population$get_group_of_infectors(
+            c(1, 2), matrix(rep(0.5, 4), ncol = 1)
+    ))
+    expect_error(
+        population$get_group_of_infectors(
+            c(1, 2), matrix(rep("a", 4), ncol = 2)
+    ))
+    expect_error(
+        population$get_group_of_infectors(
+            c(1, 2), matrix(rep(-1, 4), ncol = 2)
+    ))
+    expect_error(
+        population$get_group_of_infectors(
+            c(1, 2), matrix(rep(2, 4), ncol = 2)
+    ))
+
+})
+
+test_that("Population$get_group_of_infectors() errors when an invalid num_infectees is given", {
+
+    withr::with_seed(1234, {
+
         ref_strain <- ReferenceStrain$new("ref_strain")
-        init_inf <- 2
-        pop <- Population$new(
-            1, ref_strain, 
-            init_inf = init_inf,
-            find_infector_method = "random"
+        grps <- c(
+            Group$new(1, ref_strain),
+            Group$new(2, ref_strain)
         )
-
-        intervals <- c(1:5)
-        infectors <- pop$get_infectors(intervals)
-        expect_length(infectors, length(intervals))
-        expect_length(unique(infectors), init_inf)
-        expect_true(all(
-            vapply(
-                infectors,
-                function(infector) infector$is_infectious(pop$time),
-                logical(1L)
-            )
-        ))
-    })
-})
-
-test_that("Population$get_infectors() successfully completes using default transmission infector method", {
-    withr::with_seed(1234, {
-    
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        init_inf <- 2
-        pop <- Population$new(
-            1, ref_strain, 
-            init_inf = init_inf
+        inf_rates <- matrix(rep(1, 4), ncol = 2)
+        lab <- Lab$new()
+        TestO <- R6::R6Class("TestO", inherit = Population,
+            public = list(group_ids = function() private$group_ids_)
         )
+        population <- TestO$new(grps, inf_rates, lab)
+    
+        num_infectees <- c(2, 1)
+        fois_mat <- matrix(rep(0.25, 4), ncol = 2)
+        group_infs <- population$get_group_of_infectors(num_infectees, fois_mat)
+        
 
-        intervals <- c(5, 6)
-
-        expected_infectors <- c()
-        inf_times <- c()
-        rec_times <- c()
-
-        # prepare two infectious hosts that aren't infected at time 0
-        for (i in seq_along(intervals)) {
-            infectee <- pop$susceptible_hosts()[[i]]
-            infectee$prepare_for_infection(intervals[i])
-            pop$infectious_hosts()[[1]]$infect(infectee, intervals[i])
-
-            expected_infectors <- c(expected_infectors, infectee)
-            inf_times <- c(inf_times, infectee$infectious_time)
-            rec_times <- c(rec_times, infectee$recovery_time)
-        }
-
-        pop$time <- min(rec_times - 1)
-        infectors <- pop$get_infectors(pop$time - inf_times)
-
-        expect_setequal(infectors, expected_infectors)
+        expect_length(group_infs, length(num_infectees))
+        expect_true(all(vapply(
+            seq_along(num_infectees),
+            function(i) {all(
+                length(group_infs[[i]]) == num_infectees[[i]],
+                all(group_infs[[i]] %in% population$group_ids())
+            )},
+            logical(1L)
+        )))
     })
 })
 
@@ -471,29 +301,46 @@ test_that("Population$get_infectors() successfully completes using default trans
 # Method: Population$get_num_infectees()
 ###############################################################################
 
-test_that("Population$get_num_infectees() errors when invalid foi given", {
-    
+test_that("Population$get_num_infectees() errors when an invalid num_infectees is given", {
+
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+ 
+    fois_mat <- matrix(rep(0.5, 4), ncol = 2)
+    
+    expect_error(population$get_num_infectees(c(1)))
+    expect_error(population$get_num_infectees(c("a", 2)))
+    expect_error(population$get_num_infectees(c(-1, 2)))
 
-
-    expect_error(pop$get_num_infectees("a"))
-    expect_error(pop$get_num_infectees(c(1, 2)))
 })
 
-test_that("Population$get_num_infectees() successfully completes", {
+test_that("Population$get_num_infectees() completes successfully", {
+
     withr::with_seed(1234, {
-    
+
         ref_strain <- ReferenceStrain$new("ref_strain")
-        init_sus <- 100
-        pop <- Population$new(1, ref_strain, init_sus = init_sus)
+        grps <- c(
+            Group$new(1, ref_strain),
+            Group$new(2, ref_strain)
+        )
+        inf_rates <- matrix(rep(1, 4), ncol = 2)
+        lab <- Lab$new()
+        population <- Population$new(grps, inf_rates, lab)
+    
+        fois_mat <- matrix(rep(0.025, 4), ncol = 2)
+        num_infectees <- population$get_num_infectees(rowSums(fois_mat))
+        
 
-        num_infectees <- pop$get_num_infectees(0.2)
+        expect_length(num_infectees, length(grps))
+        expect_true(all(num_infectees %% 1 == 0))
+        expect_true(all(num_infectees >= 0))
 
-        expect_true(is.integer(num_infectees))
-        expect_length(num_infectees, 1)
-        expect_true(0 <= num_infectees)
-        expect_true(num_infectees <= init_sus)
     })
 })
 
@@ -501,92 +348,30 @@ test_that("Population$get_num_infectees() successfully completes", {
 # Method: Population$infect()
 ###############################################################################
 
-test_that("Population$infect() successfully completes with a single infective", {
+
+test_that("Population$infect() completes successfully", {
+
     withr::with_seed(1234, {
-    
+
         ref_strain <- ReferenceStrain$new("ref_strain")
-        init_sus <- 100
-        pop <- Population$new(1, ref_strain, init_sus = init_sus)
-
-        expected_host_ids <- c(73)
-        pop$infect()
-
-        expect_length(pop$exposed_hosts(), length(expected_host_ids))
-        ids <- vapply(pop$exposed_hosts(), function(host) host$id, integer(1L))
-        expect_setequal(
-            ids,
-            expected_host_ids
+        init_sus <- 49
+        grps <- c(
+            Group$new(1, ref_strain, init_sus = init_sus),
+            Group$new(2, ref_strain, init_sus = init_sus)
         )
-        expect_equal(pop$time, 1)
-    })
-})
-
-###############################################################################
-# Method: Population$infectious_hosts()
-###############################################################################
-
-test_that("Population$infectious_hosts() errors when invalid time given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-
-
-    expect_error(pop$infectious_hosts("a"))
-    expect_error(pop$infectious_hosts(1.5))
-    expect_error(pop$infectious_hosts(c(1, 2)))
-})
-
-test_that("Population$infectious_hosts() successfully completes", {
-    
-    withr::with_seed(1234, {
-    
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        pop <- Population$new(1, ref_strain, inc_shape = 0)
-        # trigger an infection so there are exposed hosts
-        pop$infect()
-
-        expected <- c()
-        for (host in pop$hosts) {
-            if (host$is_infectious(pop$time)) {
-                expected <- c(expected, host)
-            }
-        }
-
-        expect_setequal(pop$infectious_hosts(), expected)
-    })
-})
-
-###############################################################################
-# Method: Population$recovered_hosts()
-###############################################################################
-
-test_that("Population$recovered_hosts() errors when invalid time given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-
-
-    expect_error(pop$recovered_hosts("a"))
-    expect_error(pop$recovered_hosts(1.5))
-    expect_error(pop$recovered_hosts(c(1, 2)))
-})
-
-test_that("Population$recovered_hosts() successfully completes", {
-    
-    withr::with_seed(1234, {
-    
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        init_inf <- 5
-        pop <- Population$new(1, ref_strain, init_inf = init_inf)
-
-        index_hosts <- pop$infectious_hosts()
-        recovery_times <- vapply(
-            index_hosts,
-            function(host) host$recovery_time,
-            numeric(1L)
+        inf_rates <- matrix(rep(1, 4), ncol = 2)
+        lab <- Lab$new()
+        TestO <- R6::R6Class("TestO", inherit = Population,
+            public = list(align_group_times_ = function() private$align_group_times())
         )
+        population <- TestO$new(grps, inf_rates, lab)
+    
+        fois_mat <- matrix(rep(0.025, 4), ncol = 2)
+        population$time <- 1
+        population$align_group_times_()
+        population$infect()
 
-        expect_setequal(pop$recovered_hosts(max(recovery_times)), index_hosts)
+        expect_true(all(population$susceptible_sizes < init_sus))
     })
 })
 
@@ -594,458 +379,408 @@ test_that("Population$recovered_hosts() successfully completes", {
 # Method: Population$run_simulation()
 ###############################################################################
 
-test_that("Population$run_simluation() errors when invalid lab given", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    Class <- R6::R6Class("Class")
-    class <- Class$new()
 
-    expect_error(pop$run_simluation(class))
-})
+test_that("Population$run_simulation() errors when invalid feedback provided", {
 
-test_that("Population$run_simluation() errors when invalid time given", {
-    
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(1, 4), ncol = 2)
     lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
 
-    expect_error(pop$run_simluation(lab, feedback = "a"))
-    expect_error(pop$run_simluation(lab, feedback = c(1, 2)))
-    expect_error(pop$run_simluation(lab, feedback = 1.5))
-    expect_error(pop$run_simluation(lab, feedback = -1.5))
+    expect_error(population$run_simulation("a"))
+    expect_error(population$run_simulation(c(2, 1)))
+    expect_error(population$run_simulation(1.2))
+
 })
 
-test_that("Population$run_simluation() errors when invalid time given", {
-    
-    withr::with_seed(1234, {
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        pop <- Population$new(1, ref_strain)
-        lab <- Lab$new()
+test_that("Population$run_simulation() completes successfully", {
 
-        pop$run_simulation(lab, 0)
-        
-        expect_gt(pop$time, 0)
-        expect_gt(lab$num_wgs, 0)
-        expect_gt(pop$recovered_size, 0)
+    withr::with_seed(1234, {
+
+        ref_strain <- ReferenceStrain$new("ref_strain")
+        grps <- c(
+            Group$new(1, ref_strain),
+            Group$new(2, ref_strain)
+        )
+        inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+        lab <- Lab$new()
+        population <- Population$new(grps, inf_rates, lab)
+        population$run_simulation(0)
+    
+        expect_gt(population$time, 0)
+        expect_gt(population$num_wgs, 0)
+        expect_gt(sum(population$recovered_sizes), 0)
     })
 })
 
 ###############################################################################
-# Method: Population$susceptible_hosts()
+# Method: Population$sample_groups()
 ###############################################################################
 
-test_that("Population$susceptible_hosts() errors when invalid time given", {
+test_that("Population$sample_groups() completes successfully", {
+
+    withr::with_seed(1234, {
+        ref_strain <- ReferenceStrain$new("ref_strain")
+        sample_schedule <- "calendar"
+        sample_freq <- 2
+        init_inf <- 4
+        grps <- c(
+            Group$new(
+                1, ref_strain,
+                init_inf = init_inf,
+                inc_shape = 0,
+                rec_shape = 11,
+                sample_schedule = sample_schedule,
+                sample_freq = sample_freq    
+            ),
+            Group$new(
+                2, ref_strain,
+                init_inf = init_inf,
+                inc_shape = 0,
+                rec_shape = 11,
+                sample_schedule = sample_schedule,
+                sample_freq = sample_freq    
+            )
+        )
+        inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+        lab <- Lab$new()
+        TestO <- R6::R6Class("TestO", inherit = Population,
+            public = list(align_group_times_ = function() private$align_group_times())
+        )
+        population <- TestO$new(grps, inf_rates, lab)
     
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
+        population$time <- sample_freq
+        population$align_group_times_()
 
+        population$sample_groups()
 
-    expect_error(pop$susceptible_hosts("a"))
-    expect_error(pop$susceptible_hosts(1.5))
-    expect_error(pop$susceptible_hosts(c(1, 2)))
+        expect_equal(lab$num_wgs, init_inf * 2)
+    })
 })
 
-test_that("Population$susceptible_hosts() successfully completes", {
-    
-    withr::with_seed(1234, {
-    
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        init_sus <- 5
-        pop <- Population$new(1, ref_strain, init_sus = init_sus)
+###############################################################################
+# Active Bindings: Population$exposed_sizes
+###############################################################################
 
-        expect_length(pop$susceptible_hosts(), init_sus)
+
+test_that("Population$exposed_sizes completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+    lab <- Lab$new()
+    TestO <- R6::R6Class("TestO", inherit = Population,
+        public = list(align_group_times_ = function() private$align_group_times())
+    )
+    population <- TestO$new(grps, inf_rates, lab)
+    population$time <- 1
+    population$align_group_times_()
+    population$infect()
+
+    expected <- vapply(grps, function(grp) grp$exposed_size, numeric(1L))
+    expect_equal(population$exposed_sizes, expected)
+
+})
+
+###############################################################################
+# Method: Population$hosts_due_for_sampling
+###############################################################################
+
+test_that("Population$hosts_due_for_sampling() completes successfully", {
+
+    withr::with_seed(1234, {
+        ref_strain <- ReferenceStrain$new("ref_strain")
+        sample_schedule <- "calendar"
+        sample_freq <- 1
+        init_inf <- 4
+        grps <- c(
+            Group$new(
+                1, ref_strain,
+                init_inf = init_inf,
+                inc_shape = 0,
+                rec_shape = 11,
+                sample_schedule = sample_schedule,
+                sample_freq = sample_freq    
+            ),
+            Group$new(
+                2, ref_strain,
+                init_inf = init_inf,
+                inc_shape = 0,
+                rec_shape = 11,
+                sample_schedule = sample_schedule,
+                sample_freq = sample_freq    
+            )
+        )
+        inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+        lab <- Lab$new()
+        TestO <- R6::R6Class("TestO", inherit = Population,
+            public = list(align_group_times_ = function() private$align_group_times())
+        )
+        population <- TestO$new(grps, inf_rates, lab)
+        population$time <- 1
+        population$align_group_times_()
+    
+        hosts <- population$hosts_due_for_sampling
+        expect_length(hosts, init_inf * 2)
         expect_true(all(vapply(
-            pop$susceptible_hosts(),
-            function(host) host$is_susceptible(pop$time),
+            hosts,
+            function(host) {all(
+                host$is_infectious(population$time),
+                host$is_sampling_due(population$time)
+            )},
             logical(1L)
         )))
     })
 })
 
 ###############################################################################
-# Active Binding: Population$hosts_due_for_sampling
+# Active Bindings: Population$is_outbreak_active
 ###############################################################################
 
-test_that("Population$hosts_due_for_sampling successfully completes", {
+
+test_that("Population$is_outbreak_active completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    grps <- c(
+        Group$new(1, ref_strain),
+        Group$new(2, ref_strain)
+    )
+    inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+    lab <- Lab$new()
+    TestO <- R6::R6Class("TestO", inherit = Population,
+        public = list(align_group_times_ = function() private$align_group_times())
+    )
+    population <- TestO$new(grps, inf_rates, lab)
+
+    expect_true(population$is_outbreak_active)
+
+    population$time <- 200
+    population$align_group_times_()
+    population$infect()
+
+    expect_false(population$is_outbreak_active)
     
-    withr::with_seed(1234, {
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        init_inf <- 5
-        sample_freq <- 5
-        pop <- Population$new(
+})
+
+###############################################################################
+# Active Bindings: Population$infectious_sizes
+###############################################################################
+
+
+test_that("Population$infectious_sizes completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    init_inf <- 4
+    grps <- c(
+        Group$new(1, ref_strain, init_inf = init_inf),
+        Group$new(2, ref_strain, init_inf = init_inf)
+    )
+    inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+
+    expected <- vapply(grps, function(grp) grp$infectious_size, numeric(1L))
+    expect_equal(population$infectious_sizes, expected)
+})
+
+###############################################################################
+# Active Bindings: Population$recovered_sizes
+###############################################################################
+
+
+test_that("Population$recovered_sizes completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    init_inf_1 <- 4
+    init_inf_2 <- 6
+    grps <- c(
+        Group$new(1, ref_strain, init_inf = init_inf_1),
+        Group$new(2, ref_strain, init_inf = init_inf_2)
+    )
+    inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+    lab <- Lab$new()
+    TestO <- R6::R6Class("TestO", inherit = Population,
+        public = list(align_group_times_ = function() private$align_group_times())
+    )
+    population <- TestO$new(grps, inf_rates, lab)
+    population$time <- 200
+    population$align_group_times_()
+
+    expect_equal(population$recovered_sizes, c(init_inf_1, init_inf_2))
+})
+
+###############################################################################
+# Active Bindings: Population$susceptible_sizes
+###############################################################################
+
+
+test_that("Population$susceptible_sizes completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    init_sus_1 <- 4
+    init_sus_2 <- 6
+    grps <- c(
+        Group$new(1, ref_strain, init_sus = init_sus_1),
+        Group$new(2, ref_strain, init_sus = init_sus_2)
+    )
+    inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+
+    expect_equal(population$susceptible_sizes, c(init_sus_1, init_sus_2))
+})
+
+###############################################################################
+# Active Bindings: Population$outbreak_sizes
+###############################################################################
+
+
+test_that("Population$outbreak_sizes completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    init_inf <- 4
+    grps <- c(
+        Group$new(1, ref_strain, init_inf = init_inf),
+        Group$new(2, ref_strain, init_inf = init_inf)
+    )
+    inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+
+    expect_equal(population$outbreak_size, init_inf * 2)
+})
+
+###############################################################################
+# Active Bindings: Population$group_outbreak_sizes
+###############################################################################
+
+
+test_that("Population$group_outbreak_sizes completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    init_inf <- 4
+    grps <- c(
+        Group$new(1, ref_strain, init_inf = init_inf),
+        Group$new(2, ref_strain, init_inf = init_inf)
+    )
+    inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
+
+    expect_equal(population$group_outbreak_sizes, rep(init_inf, 2))
+})
+
+###############################################################################
+# Active Bindings: Population$group_sizes
+###############################################################################
+
+
+test_that("Population$group_sizes completes successfully", {
+
+    ref_strain <- ReferenceStrain$new("ref_strain")
+    init_inf <- 4
+    init_sus <- 6
+    grps <- c(
+        Group$new(
             1, ref_strain, 
             init_inf = init_inf,
-            inc_shape = 0, # turn off exposure compartment
-            rec_shape = 20, # force a very long recovery time 
-            sample_schedule = "calendar", sample_freq = sample_freq
+            init_sus = init_sus
+        ),
+        Group$new(
+            2, ref_strain, 
+            init_inf = init_inf,
+            init_sus = init_sus
         )
-
-        pop$time <- sample_freq
-
-        expect_equal(pop$infectious_hosts(), pop$hosts_due_for_sampling)
-    })
-})
-
-###############################################################################
-# Active Binding: Population$is_outbreak_active
-###############################################################################
-
-test_that("Population$is_outbreak_active successfully completes", {
-    
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    init_inf <- 5
-    pop <- Population$new(
-        1, ref_strain, 
-        init_inf = init_inf
     )
+    inf_rates <- matrix(rep(0.025, 4), ncol = 2)
+    lab <- Lab$new()
+    population <- Population$new(grps, inf_rates, lab)
 
-    time <- 200
-    infector <- pop$infectious_hosts()[[1]]
-    infectee <- pop$susceptible_hosts()[[1]]
-    
-    # perform infection
-    infectee$prepare_for_infection(time)
-    infector$infect(infectee, time)
-
-    pop$time <- time - 1
-    expect_false(pop$is_outbreak_active)
-    pop$time <- time
-    expect_true(pop$is_outbreak_active)
-    pop$time <- infectee$recovery_time - 1
-    expect_true(pop$is_outbreak_active)
-    pop$time <- infectee$recovery_time
-    expect_false(pop$is_outbreak_active)
+    expect_equal(population$group_sizes, rep(init_inf + init_sus, 2))
 })
 
 ###############################################################################
-# Active Binding: Population$pop_interval_stack
+# Active Bindings: Population$align_group_times()
 ###############################################################################
 
-test_that("Population$pop_interval_stack successfully completes and then errors when empty", {
-    
+
+test_that("Population$align_group_times() completes successfully", {
+
     ref_strain <- ReferenceStrain$new("ref_strain")
-    init_sus <- 9
-    init_inf <- 1
-    pop <- Population$new(
-        1, ref_strain,
-        init_sus = init_sus, init_inf = init_inf
+    init_inf_1 <- 4
+    init_inf_2 <- 6
+    grps <- c(
+        Group$new(1, ref_strain, init_inf = init_inf_1),
+        Group$new(2, ref_strain, init_inf = init_inf_2)
     )
-
-    for (i in seq(1:init_inf + init_sus)) {
-        intervals <- pop$pop_interval_stack
-    }
-    expect_length(intervals, 2)
-    expect_setequal(names(intervals), c("inc", "infector_interval"))
-    expect_error(pop$pop_interval_stack)    
-})
-
-###############################################################################
-# Active Binding: Population$time_since_infectious_hosts_infected
-###############################################################################
-
-test_that("Population$time_since_infectious_hosts_infected successfully completes", {
-
-    withr::with_seed(1234, {
-
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        init_inf <- 5
-        pop <- Population$new(
-            1, ref_strain,
-            init_inf = init_inf
-        )
-
-        # all should be zero since all infectious hosts are index cases
-        expect_equal(pop$time_since_infectious_hosts_infected, rep(0, init_inf))
-
-        # create new infections
-        pop$infect()
-        # get latest time that a new case becomes infectious
-        inf_times <- vapply(
-            pop$exposed_hosts(),
-            function(host) host$infectious_time,
-            numeric(1L)
-        )
-        pop$time <- max(inf_times)
-        expected <- vapply(
-            pop$infectious_hosts(),
-            function(host) max(inf_times) - host$exposure_time,
-            numeric(1L)
-        )
-
-        expect_equal(pop$time_since_infectious_hosts_infected, expected)
-
-    })
-})
-
-###############################################################################
-# Active Binding: Population$time_since_infectious_hosts_infectious
-###############################################################################
-
-test_that("Population$time_since_infectious_hosts_infectious successfully completes", {
-
-    withr::with_seed(1234, {
-
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        init_inf <- 5
-        pop <- Population$new(
-            1, ref_strain,
-            init_inf = init_inf
-        )
-
-        # all should be zero since all infectious hosts are index cases
-        expect_equal(pop$time_since_infectious_hosts_infectious, rep(0, init_inf))
-
-        # create new infections
-        pop$infect()
-        # get latest time that a new case becomes infectious
-        inf_times <- vapply(
-            pop$exposed_hosts(),
-            function(host) host$infectious_time,
-            numeric(1L)
-        )
-        pop$time <- max(inf_times)
-        expected <- vapply(
-            pop$infectious_hosts(),
-            function(host) max(inf_times) - host$infectious_time,
-            numeric(1L)
-        )
-
-        expect_equal(pop$time_since_infectious_hosts_infectious, expected)
-
-    })
-})
-
-###############################################################################
-# Private Member: Population$build_interval_stack()
-###############################################################################
-
-test_that("Population$build_interval_stack() successfully completes with serial find_infector_method", {
-
-    withr::with_seed(1234, {
-
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        TestP <- R6::R6Class("TestP", inherit = Population,
-            active = list(
-                interval_stack = function() return(private$interval_stack_)
-            )
-        )
-        pop <- TestP$new(
-            1, ref_strain, 
-            find_infector_method = "serial",
-            si_shape = 8, si_rate = 2    
-        )
-        stack <- pop$interval_stack
-
-        expect_equal(nrow(stack), pop$size)
-        expect_equal(colnames(stack), c("si", "inc", "infector_interval"))
-        expect_true(all(stack$infector_interval == stack$si - stack$inc))
-    })
-})
-
-test_that("Population$build_interval_stack() successfully completes with transmission find_infector_method", {
-
-    withr::with_seed(1234, {
-
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        TestP <- R6::R6Class("TestP", inherit = Population,
-            active = list(
-                interval_stack = function() return(private$interval_stack_)
-            )
-        )
-        pop <- TestP$new(
-            1, ref_strain, 
-            find_infector_method = "transmission",
-            trans_int_shape = 3, trans_int_rate = 1    
-        )
-        stack <- pop$interval_stack
-
-        expect_equal(nrow(stack), pop$size)
-        expect_equal(colnames(stack), c("inc", "infector_interval"))
-    })
-})
-
-test_that("Population$build_interval_stack() successfully completes with random find_infector_method", {
-
-    withr::with_seed(1234, {
-
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        TestP <- R6::R6Class("TestP", inherit = Population,
-            active = list(
-                interval_stack = function() return(private$interval_stack_)
-            )
-        )
-        pop <- TestP$new(1, ref_strain, find_infector_method = "random")
-        stack <- pop$interval_stack
-
-        expect_equal(nrow(stack), pop$size)
-        expect_equal(colnames(stack), c("inc", "infector_interval"))
-        expect_true(all(stack$infector_interval == 0))
-    })
-})
-
-test_that("Population$build_interval_stack() successfully completes with generation find_infector_method", {
-
-    withr::with_seed(1234, {
-
-        ref_strain <- ReferenceStrain$new("ref_strain")
-        TestP <- R6::R6Class("TestP", inherit = Population,
-            active = list(
-                interval_stack = function() return(private$interval_stack_)
-            )
-        )
-        pop <- TestP$new(
-            1, ref_strain, 
-            find_infector_method = "generation",
-            gt_shape = 8, gt_rate = 3    
-        )
-        stack <- pop$interval_stack
-
-        expect_equal(nrow(stack), pop$size)
-        expect_equal(colnames(stack), c("inc", "infector_interval"))
-    })
-})
-
-###############################################################################
-# Private Member: Population$initalise_index_host()
-###############################################################################
-
-test_that("Population$initalise_index_host() successfully completes with variation TRUE", {
-
-
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    TestP <- R6::R6Class("TestP", inherit = Population,
+    inf_rates <- matrix(rep(1, 4), nrow = 2)
+    lab <- Lab$new()
+    TestO <- R6::R6Class("TestO", inherit = Population,
         public = list(
-            initialise_index_host_ = function(...) private$initialise_index_host(...)
+            align_group_times_ = function() private$align_group_times()
         )
     )
-    distance <- 5
-    pop <- TestP$new(
-        1, ref_strain,
-        min_init_dist = distance, max_init_dist = distance
-    )
-    host <- pop$susceptible_hosts()[[1]]
-    pop$initialise_index_host_(host)
-
-    expect_false(host$is_susceptible(pop$time))
-    expect_false(all(ref_strain$genome() == host$strains[[1]]$genome()))
+    population <- TestO$new(grps, inf_rates, lab)
+   
+    population$time
+    expect_true(all(vapply(grps, function(p) p$time, numeric(1L)) == 0))
+    population$align_group_times_()
+    expect_true(all(vapply(grps, function(p) p$time, numeric(1L)) == population$time))
 })
 
-test_that("Population$initalise_index_host() successfully completes with variation FALSE", {
+###############################################################################
+# Active Bindings: Population$force_of_infection()
+###############################################################################
 
+
+test_that("Population$force_of_infection() completes successfully", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
-    TestP <- R6::R6Class("TestP", inherit = Population,
-        public = list(
-            initialise_index_host_ = function(...) private$initialise_index_host(...)
+    init_inf_1 <- 1
+    init_inf_2 <- 2
+    init_inf_3 <- 5
+    init_inf <- c(init_inf_1, init_inf_2, init_inf_3)
+    init_sus_1 <- 10
+    init_sus_2 <- 20
+    init_sus_3 <- 30
+    init_sus <- c(init_sus_1, init_sus_2, init_sus_3)
+    grps <- c(
+        Group$new(
+            1, ref_strain, 
+            init_inf = init_inf_1,
+            init_sus = init_sus_1
+        ),
+        Group$new(
+            2, ref_strain, 
+            init_inf = init_inf_2,
+            init_sus = init_sus_2
+        ),
+        Group$new(
+            3, ref_strain, 
+            init_inf = init_inf_3,
+            init_sus = init_sus_3
         )
     )
-    distance <- 5
-    pop <- TestP$new(
-        1, ref_strain,
-        min_init_dist = distance, max_init_dist = distance
-    )
-    host <- pop$susceptible_hosts()[[1]]
-    pop$initialise_index_host_(host, FALSE)
-
-    expect_false(host$is_susceptible(pop$time))
-    expect_true(all(ref_strain$genome() == host$strains[[1]]$genome()))
-})
-
-###############################################################################
-# Private Member: Population$initialise_hosts()
-###############################################################################
-
-test_that("Population$initialise_hosts() successfully completes with one initial infective", {
-
-
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    init_inf <- 1
-    init_sus <- 5
-    pop <- Population$new(
-        1, ref_strain,
-        init_sus = init_sus, init_inf = init_inf
-    )
-    
-    expect_length(pop$hosts, init_inf + init_sus)
-    expect_length(pop$infectious_hosts(), init_inf)
-    expect_true(all(
-        ref_strain$genome() == pop$infectious_hosts()[[1]]$strains[[1]]$genome()
-    ))
-
-})
-
-test_that("Population$initialise_hosts() successfully completes with multiple initial infective", {
-
-
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    init_inf <- 5
-    init_sus <- 5
-    pop <- Population$new(
-        1, ref_strain,
-        init_sus = init_sus, init_inf = init_inf
-    )
-    
-    expect_length(pop$hosts, init_inf + init_sus)
-    expect_length(pop$infectious_hosts(), init_inf)
-})
-
-###############################################################################
-# Private Member: Population$force_of_infection()
-###############################################################################
-
-test_that("Population$force_of_infection() successfully completes", {
-
-
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    TestP <- R6::R6Class("TestP", inherit = Population,
+    inf_rates <- matrix(rep(1, 9), nrow = 3)
+    lab <- Lab$new()
+    TestO <- R6::R6Class("TestO", inherit = Population,
         public = list(
             force_of_infection_ = function(...) private$force_of_infection(...)
         )
     )
-    inf_rate <- 0.1
-    init_inf <- 5
-    init_sus <- 95
+    population <- TestO$new(grps, inf_rates, lab)
+
+    expected_output <- sweep(inf_rates, MARGIN = 2, init_inf, "*") / sum(init_sus + init_inf)
+    output <- population$force_of_infection_(init_inf)
+    
+    expect_equal(output, expected_output)
    
-    pop <- TestP$new(
-        1, ref_strain,
-        init_sus = init_sus, init_inf = init_inf,
-        inf_rate = inf_rate
-    )
-
-    expected <- inf_rate * init_inf / (init_inf + init_sus)
-    expect_equal(pop$force_of_infection_(), expected)
-})
-
-###############################################################################
-# Private Member: Population$initial_genomic_distance()
-###############################################################################
-
-test_that("Population$initial_genomic_distance() successfully completes", {
-
-
-    ref_strain <- ReferenceStrain$new("ref_strain")
-    TestP <- R6::R6Class("TestP", inherit = Population,
-        public = list(
-            initial_genomic_distance_ = function(...) private$initial_genomic_distance(...)
-        )
-    )
-    min_init_dist <- 0
-    max_init_dist <- 20
-   
-    pop <- TestP$new(
-        1, ref_strain,
-        max_init_dist = max_init_dist,
-        min_init_dist = min_init_dist
-    )
-
-    distances <- vapply(
-        seq(50),
-        function(i) pop$initial_genomic_distance_(),
-        numeric(1L)
-    )
-
-    expect_true(all(distances >= min_init_dist))
-    expect_true(all(distances <= max_init_dist))
 })
 

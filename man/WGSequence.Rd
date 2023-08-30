@@ -8,8 +8,8 @@ An R6 class representing a whole genome sequence test. Users are not expected to
 }
 \examples{
 ref_strain <- ReferenceStrain$new("ref_strain")
-pop <- Population$new(1, ref_strain)
-host <- pop$infectious_hosts()[[1]]
+grp <- Group$new(1, ref_strain)
+host <- grp$infectious_hosts()[[1]]
 strain <- host$strains[[1]]
 wgs <- WGSequence$new(1, strain, host)
 
@@ -23,9 +23,9 @@ wgs <- WGSequence$new(1, strain, host)
 
 \item{\code{is_dna}}{A logical indicating if this sequence is DNA or RNA based (TRUE and FALSE respectively)}
 
-\item{\code{metadata}}{Returns a named list of data about this sequence: \code{name}, \code{host}'s population id, \code{hosts}'s id, \code{ref_strain}'s name, \code{collection_time}, and \code{sample_number}}
+\item{\code{metadata}}{Returns a named list of data about this sequence: \code{name}, \code{host}'s group id, \code{hosts}'s id, \code{ref_strain}'s name, \code{collection_time}, and \code{sample_number}}
 
-\item{\code{name}}{String in the form \verb{<pop_id>_<host_id>_<time>_<sample_number>} padded to have up to 1, 3, 3, and 1 leading zeros respectively}
+\item{\code{name}}{String in the form \verb{<group_id>_<host_id>_<time>_<sample_number>} padded to have up to 1, 3, 3, and 1 leading zeros respectively}
 
 \item{\code{nucleotides}}{The nucleotides that are present at the \code{loci} with single nucleotide polymorphisms}
 

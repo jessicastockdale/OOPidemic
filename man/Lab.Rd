@@ -4,7 +4,7 @@
 \alias{Lab}
 \title{Lab}
 \description{
-An R6 class representing a lab. A lab handles taking WGSequences from hosts that are due to be sampled. A user will need to create this object but will usually delegate it's control to either a \code{Population} or \code{Outbreak} object
+An R6 class representing a lab. A lab handles taking WGSequences from hosts that are due to be sampled. A user will need to create this object but will usually delegate it's control to either a \code{Group} or \code{Population} object
 }
 \examples{
 #Lab$new()
@@ -15,14 +15,14 @@ An R6 class representing a lab. A lab handles taking WGSequences from hosts that
 ## ------------------------------------------------
 
 ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
-pop <- Population$new(
+grp <- Group$new(
     1, ref_strain,
     init_inf = 6,
     inc_shape = 0,
     sample_schedule = "calendar", sample_freq = 1
 )
 lab <- Lab$new()
-lab$sample_hosts(pop$infectious_hosts(1), 1)
+lab$sample_hosts(grp$infectious_hosts(1), 1)
 
 }
 \section{Active bindings}{
@@ -136,14 +136,14 @@ This \code{Lab} object
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{ref_strain <- ReferenceStrain$new("ref_strain", g_len = 100)
-pop <- Population$new(
+grp <- Group$new(
     1, ref_strain,
     init_inf = 6,
     inc_shape = 0,
     sample_schedule = "calendar", sample_freq = 1
 )
 lab <- Lab$new()
-lab$sample_hosts(pop$infectious_hosts(1), 1)
+lab$sample_hosts(grp$infectious_hosts(1), 1)
 
 }
 \if{html}{\out{</div>}}

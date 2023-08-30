@@ -1,44 +1,44 @@
 #' Plot S(E)IR compartment dynamics for disease outbreak
 #'
-#' @param x An Outbreak or Population object that has had it's outbreak simulated
+#' @param x A Population or Group object that has had it's outbreak simulated
 #' @param frequency Integer indicating how frequently the compartment sizes should be measured
-#' @param combine A boolean indicating if compartment sizes for different populations should be combined (only has an effect if an Outbreak object with multiple populations is provided) 
-#' @param population_labels A vector of strings used to label multiple populations. Should be in the same order as the populations in the Outbreak object. (similarly to combine, this only has an effect if an outbreak with multiple populations is provided)
+#' @param combine A boolean indicating if compartment sizes for different groups should be combined (only has an effect if an Population object with multiple groups is provided) 
+#' @param group_labels A vector of strings used to label multiple groups. Should be in the same order as the groups in the Population object. (similarly to combine, this only has an effect if a population with multiple groups is provided)
 #'
 #' @return A ggplot object
 #' @export
 #'
 #' @examples
-#' # An SIR model outbreak in a single homogenous population
+#' # An SIR model outbreak in a single homogenous group
 #' set.seed(1)
 #' ref_strain <- ReferenceStrain$new("ref_strain")
-#' population <- Population$new(1, ref_strain, inf_rate = 0.75, inc_shape = 0)
-#' lab_pop <- Lab$new()
-#' population$run_simulation(lab_pop)
-#' plot_compartment_dynamics(population)
+#' group <- Group$new(1, ref_strain, inf_rate = 0.75, inc_shape = 0)
+#' lab_group <- Lab$new()
+#' group$run_simulation(lab_group)
+#' plot_compartment_dynamics(group)
 #' 
-#' # An SEIR model outbreak with two populations
+#' # An SEIR model outbreak ina population with two groups
 #' set.seed(1)
 #' ref_strain <- ReferenceStrain$new("ref_strain")
-#' outbreak <- Outbreak$new(
+#' population <- Population$new(
 #'     c(
-#'         Population$new(1, ref_strain, init_inf = 5, init_sus = 95),
-#'         Population$new(2, ref_strain, init_inf = 0, init_sus = 100)
+#'         Group$new(1, ref_strain, init_inf = 5, init_sus = 95),
+#'         Group$new(2, ref_strain, init_inf = 0, init_sus = 100)
 #'     ),
 #'     matrix(c(0.75, 0.5, 0.25, 0.1), ncol = 2),
 #'     Lab$new()
 #' )
-#' outbreak$run_simulation()
-#' # plot each population separately
-#' plot_compartment_dynamics(outbreak, population_labels = c("Senior", "Adult"))
-#' # plot populations combined
-#' plot_compartment_dynamics(outbreak, combine = TRUE)
+#' population$run_simulation()
+#' # plot each group separately
+#' plot_compartment_dynamics(population, group_labels = c("Senior", "Adult"))
+#' # plot groups combined
+#' plot_compartment_dynamics(population, combine = TRUE)
 #' 
 plot_compartment_dynamics <- function(
     x,
     frequency = 1,
     combine = FALSE,
-    population_labels = NULL
+    group_labels = NULL
 ) {
 
     # R6 validations
@@ -46,19 +46,19 @@ plot_compartment_dynamics <- function(
     # correct class of x is checked later
     stopifnot(is.numeric(frequency), length(frequency) == 1, frequency %% 1 == 0)
     stopifnot(is.logical(combine), length(combine) == 1)
-    stopifnot(any(is.null(population_labels), is.character(population_labels)))
+    stopifnot(any(is.null(group_labels), is.character(group_labels)))
 
     x_classes <- class(x)
-    if ("Population" %in% x_classes) {
-        populations <- c(x)
+    if ("Group" %in% x_classes) {
+        groups <- c(x)
 
-    } else if ("Outbreak" %in% x_classes) {
-        populations <- x$populations
-        if (all(!is.null(population_labels), length(populations) != length(population_labels))) {
-            stop("The length of `population_labels` must equal the number of populations in x")
+    } else if ("Population" %in% x_classes) {
+        groups <- x$groups
+        if (all(!is.null(group_labels), length(groups) != length(group_labels))) {
+            stop("The length of `group_labels` must equal the number of groups in x")
         }
     } else {
-        stop("`x` must be an Outbreak or Population object")
+        stop("`x` must be a Population or Group object")
     }
 
     times <- base::seq.int(0, x$time, frequency)
@@ -72,8 +72,8 @@ plot_compartment_dynamics <- function(
     )
     
     for (time in times) {
-        for (population in populations) {
-            data <- rbind(data, compartment_sizes(population, time))
+        for (group in groups) {
+            data <- rbind(data, compartment_sizes(group, time))
         }
     }    
 
@@ -87,10 +87,10 @@ plot_compartment_dynamics <- function(
         compartment_labels <- compartment_labels[2:length(compartment_labels)]
     }
 
-    # combine populations if needed / delete the id column if only a single population
+    # combine groups if needed / delete the id column if only a single group
     start_col <- 3
     if (any(combine, length(unique(data$id)) == 1)) {
-        # combine data from each population
+        # combine data from each group
         data$id <- NULL
         start_col <- start_col - 1
         data <- stats::aggregate(. ~ t, data, FUN = sum)
@@ -99,30 +99,30 @@ plot_compartment_dynamics <- function(
     # pivot data longer for plotting
     data_long <- tidyr::pivot_longer(data, cols = c(seq(start_col, ncol(data))))
 
-    figure <- generate_figure(data_long, title, compartment_labels, population_labels)
+    figure <- generate_figure(data_long, title, compartment_labels, group_labels)
 
     plot(figure)
 
     return(figure)
 }
 
-#' Get the SEIR compartment sizes for a population at a given time
+#' Get the SEIR compartment sizes for a group at a given time
 #'
-#' @param population A Population object
+#' @param group A Group object
 #' @param time The time that you want the compartyment sizes for
 #'
-#' @return A list with: time, population id, and SEIR sizes
+#' @return A list with: time, group id, and SEIR sizes
 #'
 #' @noRd 
-compartment_sizes <- function(population, time) {
+compartment_sizes <- function(group, time) {
 
     result <- list(
         t = time,
-        id = as.character(population$id),
-        S = length(population$susceptible_hosts(time)),
-        E = length(population$exposed_hosts(time)),
-        I = length(population$infectious_hosts(time)),
-        R = length(population$recovered_hosts(time))
+        id = as.character(group$id),
+        S = length(group$susceptible_hosts(time)),
+        E = length(group$exposed_hosts(time)),
+        I = length(group$infectious_hosts(time)),
+        R = length(group$recovered_hosts(time))
     )
 
     return(result)
@@ -132,20 +132,20 @@ compartment_sizes <- function(population, time) {
 #'
 #' @param data A dataframe with the following columns: 
 #'  * t: time
-#'  * id: the population id (optional)
+#'  * id: the group id (optional)
 #'  * name: the name of the compartment. Options are S, E, I, and R
 #'  * value: the size of the the compartment
 #' @param title the title of the figure
 #' @param compartment_labels the labels of the compartments (lexicographic order)
-#' @param population_labels alternative labels for populations if there is more then one of them. If there is multiple and this is left as NULL then the values in the id column of `data` will be used.
+#' @param group_labels alternative labels for groups if there is more then one of them. If there is multiple and this is left as NULL then the values in the id column of `data` will be used.
 #'
 #' @return A ggplot figure
 #'
 #' @noRd
-generate_figure <- function(data, title, compartment_labels, population_labels) {
+generate_figure <- function(data, title, compartment_labels, group_labels) {
 
     if ("id" %in% names(data)) {
-        # if there still is an id column then we have multiple populations to plot
+        # if there still is an id column then we have multiple groups to plot
 
         figure <- ggplot2::ggplot(
             data, 
@@ -169,18 +169,18 @@ generate_figure <- function(data, title, compartment_labels, population_labels) 
     figure <- figure + ggplot2::theme_minimal() 
     figure <- figure + ggplot2::xlab("Time")
     figure <- figure + ggplot2::ylab("Number of individuals")
-    figure <- figure + ggplot2::guides(linetype = ggplot2::guide_legend(title = "Population"))
+    figure <- figure + ggplot2::guides(linetype = ggplot2::guide_legend(title = "Group"))
     figure <- figure + ggplot2::scale_colour_discrete(
         name = "Compartment",
         labels = compartment_labels
     ) 
     figure <- figure + ggplot2::ggtitle(title)
 
-    # add population labels if they've been supplied
-    if (!is.null(population_labels)) {
+    # add group labels if they've been supplied
+    if (!is.null(group_labels)) {
         figure <- figure + ggplot2::scale_linetype_discrete(
-            name = "Population", 
-            labels = population_labels
+            name = "Group", 
+            labels = group_labels
         )
     }
 

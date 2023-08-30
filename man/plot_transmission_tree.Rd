@@ -7,7 +7,7 @@
 plot_transmission_tree(x, rooted = TRUE, edge_length = "transmission")
 }
 \arguments{
-\item{x}{An Outbreak or Population object that has had it's outbreak simulated}
+\item{x}{A Population or Group object that has had it's outbreak simulated}
 
 \item{rooted}{Logical. Should the tree be rooted at the index cases}
 
@@ -25,36 +25,35 @@ A visNetwork plot
 Plot a transmission tree for a disease outbreak
 }
 \examples{
-# An SEIR model outbreak in a single homogenous population using the 
+# An SEIR model outbreak in a single homogenous group using the 
 # serial interval method to find infectors
 set.seed(1)
 ref_strain <- ReferenceStrain$new("ref_strain")
-population <- Population$new(
+group <- Group$new(
      1, 
      ref_strain, 
      inf_rate = 0.75, 
      find_infector_method = "serial", 
      si_shape = 6, si_rate = 1
 )
-population$run_simulation(Lab$new())
-figure <- plot_transmission_tree(population, rooted = FALSE, edge_length = "serial")
+group$run_simulation(Lab$new())
+figure <- plot_transmission_tree(group, rooted = FALSE, edge_length = "serial")
 print(figure)
 
-# An SEIR model outbreak with two populations using the tranmission method 
+# An SEIR model outbreak in a population with two groups using the tranmission method 
 # for finding infectors.
-# The two populations will have different transmission interval shapes
 set.seed(1)
-outbreak <- Outbreak$new(
+population <- Population$new(
     c(
-        Population$new(1, ref_strain, init_inf = 5, init_sus = 95),
-        Population$new(2, ref_strain, init_inf = 0, init_sus = 100)
+        Group$new(1, ref_strain, init_inf = 5, init_sus = 95),
+        Group$new(2, ref_strain, init_inf = 0, init_sus = 100)
     ),
     matrix(c(0.75, 0.5, 0.25, 0.1), ncol = 2),
     Lab$new()
 )
-outbreak$run_simulation(0)
+population$run_simulation(0)
 
-figure <- plot_transmission_tree(outbreak)
+figure <- plot_transmission_tree(population)
 print(figure)
 
 }

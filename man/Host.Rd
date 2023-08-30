@@ -8,13 +8,13 @@ An R6 class representing a host
 }
 \examples{
 ref_strain <- ReferenceStrain$new(name = 'ref_strain')
-pop <- Population$new(id = 1, ref_strain = ref_strain)
-Host$new(id = 2, population = pop)
+grp <- Group$new(id = 1, ref_strain = ref_strain)
+Host$new(id = 2, group = grp)
 }
 \section{Active bindings}{
 \if{html}{\out{<div class="r6-active-bindings">}}
 \describe{
-\item{\code{data}}{returns a list of data: host id and population id, infector id and population id, exposure time, infectious time, and recovery time}
+\item{\code{data}}{returns a list of data: host id and group id, infector id and group id, exposure time, infectious time, and recovery time}
 
 \item{\code{exposure_time}}{The time at which this host was exposed (Returns NA if still susceptible)}
 
@@ -30,17 +30,17 @@ Host$new(id = 2, population = pop)
 
 \item{\code{is_index}}{Logical indicating if this \code{Host} was an index case}
 
-\item{\code{population}}{The \code{Population} object that this host belongs to}
+\item{\code{group}}{The \code{Group} object that this host belongs to}
 
 \item{\code{realisation_time}}{The time at which this \code{Host} last realised itself}
 
 \item{\code{recovery_time}}{The time at which this host recovered (Returns NA if still susceptible)}
 
-\item{\code{sample_freq}}{The \code{sample_freq} specified in this \code{Host}'s \code{Population} object}
+\item{\code{sample_freq}}{The \code{sample_freq} specified in this \code{Host}'s \code{Group} object}
 
 \item{\code{sample_time}}{The next time at which this host is due sampling (Returns NA if still susceptible)}
 
-\item{\code{sample_schedule}}{The \code{sample_schedule} specified in this \code{Host}'s \code{Population} object}
+\item{\code{sample_schedule}}{The \code{sample_schedule} specified in this \code{Host}'s \code{Group} object}
 
 \item{\code{strains}}{A vector of \code{Strain} objects that this \code{Host} is carrying}
 }
@@ -67,17 +67,17 @@ Host$new(id = 2, population = pop)
 \if{html}{\out{<a id="method-Host-new"></a>}}
 \if{latex}{\out{\hypertarget{method-Host-new}{}}}
 \subsection{Method \code{new()}}{
-Create a new host object. Generally, a user won't be required to do this explicitly. It will be handled by a \code{Population} object
+Create a new host object. Generally, a user won't be required to do this explicitly. It will be handled by a \code{Group} object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Host$new(id, population)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Host$new(id, group)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{id}}{The id of this host. Must be unique within each population, otherwise, this will lead to conflicting lab results.}
+\item{\code{id}}{The id of this host. Must be unique within each group, otherwise, this will lead to conflicting lab results.}
 
-\item{\code{population}}{The Population object that this host belongs to (or a R6Class object that inherits from Population).}
+\item{\code{group}}{The Group object that this host belongs to (or a R6Class object that inherits from Group).}
 }
 \if{html}{\out{</div>}}
 }

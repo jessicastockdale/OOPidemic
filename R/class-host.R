@@ -4,8 +4,8 @@
 #' 
 #' @examples
 #' ref_strain <- ReferenceStrain$new(name = 'ref_strain')
-#' pop <- Population$new(id = 1, ref_strain = ref_strain)
-#' Host$new(id = 2, population = pop)
+#' grp <- Group$new(id = 1, ref_strain = ref_strain)
+#' Host$new(id = 2, group = grp)
 #' @export
 #' 
 Host <- R6::R6Class("Host",
@@ -24,16 +24,16 @@ Host <- R6::R6Class("Host",
         # public functions
 
         #' @description
-        #' Create a new host object. Generally, a user won't be required to do this explicitly. It will be handled by a `Population` object
+        #' Create a new host object. Generally, a user won't be required to do this explicitly. It will be handled by a `Group` object
         #' 
-        #' @param id The id of this host. Must be unique within each population, otherwise, this will lead to conflicting lab results.
-        #' @param population The Population object that this host belongs to (or a R6Class object that inherits from Population). 
+        #' @param id The id of this host. Must be unique within each group, otherwise, this will lead to conflicting lab results.
+        #' @param group The Group object that this host belongs to (or a R6Class object that inherits from Group). 
         #' 
         #' @return A new `Host` object
         #' 
         initialize = function(
             id,
-            population
+            group
         ) {
             
             # parameter validations
@@ -41,10 +41,10 @@ Host <- R6::R6Class("Host",
                 is.numeric(id), id %% 1 == 0,
                 id > 0, length(id) == 1
             )
-            stopifnot("Population" %in% class(population))
+            stopifnot("Group" %in% class(group))
 
             private$id_ <- id
-            private$population_ <- population
+            private$group_ <- group
 
             invisible(self)
         },
@@ -66,7 +66,7 @@ Host <- R6::R6Class("Host",
             if (!is.null(infector)) {
                 stopifnot(
                     "Host" %in% class(infector),
-                    infector$is_infectious(private$population_$time)
+                    infector$is_infectious(private$group_$time)
                 )
             }
             stopifnot(all(vapply(
@@ -105,7 +105,7 @@ Host <- R6::R6Class("Host",
         #' 
         infect = function(infectee, time) {
             
-            stopifnot(self$is_infectious(private$population_$time))
+            stopifnot(self$is_infectious(private$group_$time))
             stopifnot(
                 "Host" %in% class(infectee)
             )
@@ -239,7 +239,7 @@ Host <- R6::R6Class("Host",
                 infector_interval <- NA
 
             } else {
-                intervals <- private$population_$pop_interval_stack
+                intervals <- private$group_$group_interval_stack
                 private$infectious_time_ <- time + ceiling(intervals$inc)
                 infector_interval <- intervals$infector_interval
 
@@ -260,7 +260,7 @@ Host <- R6::R6Class("Host",
         print = function(...) {
             cat("Host: \n")
             cat("   Id:             ", private$id_, "\n", sep = "")
-            cat("   Population:     ", private$population_$id, "\n", sep = "")
+            cat("   Group:     ", private$group_$id, "\n", sep = "")
             cat("   Exposure Time:  ", private$exposure_time_, "\n", sep = "")
             cat("   Infectious Time: ", private$infectious_time_, "\n", sep = "")
             cat("   Recovery Time:  ", private$recovery_time_, "\n", sep = "")
@@ -318,23 +318,23 @@ Host <- R6::R6Class("Host",
 
     active = list(
 
-        #' @field data returns a list of data: host id and population id, infector id and population id, exposure time, infectious time, and recovery time
+        #' @field data returns a list of data: host id and group id, infector id and group id, exposure time, infectious time, and recovery time
         data = function(v) {
             if (missing(v)) {
 
                 if (!is.null(private$infector_)) {
                     infector_id <- private$infector_$id
-                    infector_population <- private$infector_$population
+                    infector_group <- private$infector_$group
                 } else {
                     infector_id <- NA
-                    infector_population <- NA
+                    infector_group <- NA
                 }
 
                 list(
                     host_id = private$id_,
-                    population = private$population_$id,
+                    group = private$group_$id,
                     infector_id = infector_id,
-                    infector_population = infector_population,
+                    infector_group = infector_group,
                     exposure_time = private$exposure_time_,
                     infectious_time = private$infectious_time_,
                     recovery_time = private$recovery_time_
@@ -391,12 +391,12 @@ Host <- R6::R6Class("Host",
             }
         },
 
-        #' @field population The `Population` object that this host belongs to
-        population = function(v) {
+        #' @field group The `Group` object that this host belongs to
+        group = function(v) {
             if (missing(v)) {
-                if (! is.null(private$population_)) private$population_
+                if (! is.null(private$group_)) private$group_
                 else NULL
-            }else stop("Can't set `$population`", call. = FALSE)
+            }else stop("Can't set `$group`", call. = FALSE)
         },
 
         #' @field realisation_time The time at which this `Host` last realised itself
@@ -411,9 +411,9 @@ Host <- R6::R6Class("Host",
             else stop("Can't set `$recovery_time`", call. = FALSE)
         },
 
-        #' @field sample_freq The `sample_freq` specified in this `Host`'s `Population` object
+        #' @field sample_freq The `sample_freq` specified in this `Host`'s `Group` object
         sample_freq = function(v) {
-            if (missing(v)) private$population_$sample_freq
+            if (missing(v)) private$group_$sample_freq
             else stop("Can't set `$sample_freq`", call. = FALSE)
         },
 
@@ -423,9 +423,9 @@ Host <- R6::R6Class("Host",
             else stop("Can't set `$sample_time`", call. = FALSE)
         },
 
-        #' @field sample_schedule The `sample_schedule` specified in this `Host`'s `Population` object
+        #' @field sample_schedule The `sample_schedule` specified in this `Host`'s `Group` object
         sample_schedule = function(v) {
-            if (missing(v)) private$population_$sample_schedule
+            if (missing(v)) private$group_$sample_schedule
             else stop("Can't set `$sample_schedule`", call. = FALSE)
         },
 
@@ -449,7 +449,7 @@ Host <- R6::R6Class("Host",
         infectees_ = c(),
         infectious_time_ = NA,
         infector_ = NULL,
-        population_ = NULL,
+        group_ = NULL,
         realisation_time_ = NA,
         recovery_time_ = NA,
         sample_time_ = c(),
@@ -487,13 +487,13 @@ Host <- R6::R6Class("Host",
             # generate a recovery time
             private$infectious_time_ + ceiling(stats::rgamma(
                 1, 
-                private$population_$rec_shape, 
-                private$population_$rec_rate
+                private$group_$rec_shape, 
+                private$group_$rec_rate
             ))
         },
 
         # @description
-        # Generate a sample time determined by `samp_schedule` specified in this `host`'s `population` object
+        # Generate a sample time determined by `samp_schedule` specified in this `host`'s `group` object
         # 
         # @return The sample time
         # 

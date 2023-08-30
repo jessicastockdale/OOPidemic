@@ -5,8 +5,8 @@
 test_that("WGSequence$new() errors when invalid sample_num given", {
     
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$infectious_hosts()[[1]]
     strain <- host$strains[[1]]
 
     expect_error(WGSequence$new(sample_num = "a", strain, host))
@@ -18,8 +18,8 @@ test_that("WGSequence$new() errors when invalid sample_num given", {
 test_that("WGSequence$new() errors when invalid strain given", {
     
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$infectious_hosts()[[1]]
 
     Class <- R6::R6Class("Class")
     class <- Class$new()
@@ -30,8 +30,8 @@ test_that("WGSequence$new() errors when invalid strain given", {
 test_that("WGSequence$new() errors when invalid strain given", {
     
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(1, ref_strain)
-    host <- pop$infectious_hosts()[[1]]
+    grp <- Group$new(1, ref_strain)
+    host <- grp$infectious_hosts()[[1]]
     strain <- host$strains[[1]]
 
     Class <- R6::R6Class("Class")
@@ -43,12 +43,12 @@ test_that("WGSequence$new() errors when invalid strain given", {
 test_that("WGSequence$new() completes successfully", {
     
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         init_inf = 2,
         min_init_dist = 1, max_init_dist = 20
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
     strain <- host$strains[[1]]
     wgs <- WGSequence$new(1, strain, host)
 
@@ -65,12 +65,12 @@ test_that("WGSequence$new() completes successfully", {
 test_that("WGSequence$genome() errors when invalid as_character given", {
     
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         init_inf = 2,
         min_init_dist = 1, max_init_dist = 20
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
     strain <- host$strains[[1]]
     wgs <- WGSequence$new(1, strain, host)
 
@@ -81,12 +81,12 @@ test_that("WGSequence$genome() errors when invalid as_character given", {
 test_that("WGSequence$genome() returns correct characters", {
     
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         init_inf = 2,
         min_init_dist = 1, max_init_dist = 20
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
     strain <- host$strains[[1]]
     wgs <- WGSequence$new(1, strain, host)
 
@@ -105,12 +105,12 @@ test_that("WGSequence$genome() returns correct characters", {
 test_that("WGSequence$genome() returns correct integers", {
     
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         init_inf = 2,
         min_init_dist = 1, max_init_dist = 20
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
     strain <- host$strains[[1]]
     wgs <- WGSequence$new(1, strain, host)
 
@@ -127,12 +127,12 @@ test_that("WGSequence$genome() returns correct integers", {
 test_that("WGSequence$name() errors when invalid as_character given", {
     
     ref_strain <- ReferenceStrain$new("ref_strain")
-    pop <- Population$new(
+    grp <- Group$new(
         1, ref_strain,
         init_inf = 2,
         min_init_dist = 1, max_init_dist = 20
     )
-    host <- pop$infectious_hosts()[[1]]
+    host <- grp$infectious_hosts()[[1]]
     strain <- host$strains[[1]]
     sample_num <- 1
     wgs <- WGSequence$new(sample_num, strain, host)
@@ -140,7 +140,7 @@ test_that("WGSequence$name() errors when invalid as_character given", {
     expect_equal(
         wgs$name, 
         paste0(
-            sprintf("%02d", pop$id), "_",
+            sprintf("%02d", grp$id), "_",
             sprintf("%04d", host$id), "_",
             sprintf("%04d", host$realisation_time), "_",
             sprintf("%02d", sample_num)

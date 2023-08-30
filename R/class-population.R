@@ -1,26 +1,28 @@
 #' Population
 #' 
-#' @description An R6 class representing a population. The Default model for an outbreak is SEIR but can be switched to an SIR model by setting `inc_shape` to zero.
+#' @description An R6 class representing an population. Used to simulate an disease outbreak in one or more
 #' 
-#' @examples
-#' ref_strain <- ReferenceStrain$new(name = "ref_strain")
-#' Population$new(id = 1, ref_strain = ref_strain)
-#' Population$new(
-#'  id = 1, 
-#'  ref_strain = ref_strain, 
-#'  find_infector_method = "serial",
-#'  si_shape = 6,
-#'  si_rate = 2 
+#' @examples 
+#' # An SEIR model outbreak ina population with two groups
+#' set.seed(1)
+#' ref_strain <- ReferenceStrain$new("ref_strain")
+#' population <- Population$new(
+#'     c(
+#'         Group$new(1, ref_strain, init_inf = 5, init_sus = 95),
+#'         Group$new(2, ref_strain, init_inf = 0, init_sus = 100)
+#'     ),
+#'     matrix(c(0.75, 0.5, 0.25, 0.1), ncol = 2),
+#'     Lab$new()
 #' )
-#' Population$new(
-#'  id = 1, 
-#'  ref_strain = ref_strain, 
-#'  find_infector_method = "random",
-#'  max_init_dist = 20
-#' )
+#' population$run_simulation()
+#' # plot each group separately
+#' plot_compartment_dynamics(population, group_labels = c("Senior", "Adult"))
+#' # plot groups combined
+#' plot_compartment_dynamics(population, combine = TRUE)
+#' 
 #' @export
 #' 
-Population <- R6::R6Class("Population",
+Population <- R6::R6Class("Population", 
 
     cloneable = FALSE,
 
@@ -29,818 +31,490 @@ Population <- R6::R6Class("Population",
 
     public = list(
 
-        #######################################################################
-        # public variables
-
-        #' @field id The id of this population ** this must be unique if multiple populations are being used in an `Outbreak` object
-        id = NA, 
-        
-        #' @field init_sus The number of initial susceptible individuals
-        init_sus = NA, 
-        #' @field init_inf The number of initial infected individuals
-        init_inf = NA, 
-
-        #' @field inf_rate The infectious pressure exerted by one infectious `host` on the rest of this `population`
-        inf_rate = NA, 
-
-        #' @field find_infector_method The method with which an infectees infector is chosen (see definition of new for valid choices)
-        find_infector_method = NA, 
-
-        #' @field si_shape,si_rate The Gamma shape and rate parameters for the serial interval 
-        si_shape = NA, si_rate = NA, 
-
-        #' @field gt_shape,gt_rate The Gamma shape and rate parameters for the generation time 
-        gt_shape = NA, gt_rate = NA, 
-
-        #' @field trans_int_shape,trans_int_rate The Gamma shape and rate parameters for the transmission itnerval
-        trans_int_shape = NA, trans_int_rate = NA, 
-        
-        #' @field inc_shape,inc_rate The Gamma shape and rate parameters for the incubation time
-        inc_shape = NA, inc_rate = NA, 
-
-        #' @field rec_shape,rec_rate The Gamma shape and rate parameters for the recovery time. 
-        rec_shape = NA, rec_rate = NA, 
-        
-        #' @field ref_strain The `ReferenceStrain` object used to create `Strain` objects for the index cases if there was any
-        ref_strain = NULL, 
-
-        #' @field min_init_dist,max_init_dist The minimum and maximum distances that index `Strain` objects should be from the `ref_strain`
-        max_init_dist = NA, min_init_dist = NA, 
-
-        #' @field sample_schedule,sample_freq The method used to schedule sampling times and the time interval between sampling (see new definition for valid choices):
-        sample_schedule = NULL, sample_freq = NA, 
-
-        #' @field time The current time for this population
+        #' @field inf_rates A matrix with the same number of rows and columns as there is groups. The entry in the `i`th row and `j`the column is how much infectious pressure an individual in group `i` exerts on an individual in group `j`
+        inf_rates = NULL, 
+        #' @field lab The `Lab` object (or an R6Class that inherits from `Lab`) that takes samples from `groups`
+        lab = NULL, 
+        #' @field groups A vector of `Group` objects (or R6Classes that inherit from `Group`) 
+        groups = NULL, 
+        #' @field time An integer representing the current time in the population
         time = 0L,
 
-        #######################################################################
-        # public functions
-
         #' @description
-        #' Create a new `population` object
+        #' Create a new `Population` object. 
         #' 
-        #' @param id The id of this population ** this must be unique if multiple populations are being used in an `Outbreak` object
-        #' @param ref_strain The time that this strain is 'spawned'
-        #' @param init_sus The number of initial susceptible individuals (default 99)
-        #' @param init_inf The number of initial infected individuals (default 1)
-        #' @param inf_rate The infectious pressure exerted by one infectious `host` on the rest of this `population`
-        #' @param find_infector_method The method with which an infectees infector is chosen (see definition of new for valid choices)
-        #' * 'transmission' (Default) Uses the transition interval to pick the infector. A transition interval is the time elapsed between an infector becoming infectious and the infectee being exposed
-        #' * 'serial': Uses the serial interval to pick the infector. A serial interval is the time elapsed between an infector and their infectee becoming infectious
-        #' * 'generation': Uses the generation time to pick the infector. A generation time is the time elapsed between an infector and their infectee being exposed
-        #' * 'random': An infector is randomly selected from all currently infectious hosts
-        #' @param si_shape,si_rate The Gamma shape and rate parameters for the serial interval (Defaults are `6` and `2`)
-        #' @param gt_shape,gt_rate The Gamma shape and rate parameters for the generation time 
-        #' @param trans_int_shape,trans_int_rate The Gamma shape and rate parameters for the transmission interval
-        #' @param inc_shape,inc_rate The Gamma shape and rate parameters for the incubation time. If running an SIR simulation then set `inc_shape` to zero so that a host spends 0 time in the exposed compartment. (Defaults are `3` and `2` respectively)
-        #' @param rec_shape,rec_rate The Gamma shape and rate parameters for the recovery time. (Defaults are `5` and `1` respectively)
-        #' @param min_init_dist,max_init_dist The minimum and maximum distances that index `Strain` objects should be from the `ref_strain` (Default for both is `0`)
-        #' @param sample_schedule,sample_freq The method used to schedule sampling times and the time interval between sampling
-        #' * 'random': (Default) A random time is chosen between a `host`'s infectious time and their recovery time
-        #' * 'calendar': Samples are taken from every infectious host at `sample_freq` intervals (starting from time = `sample_freq`)
-        #' * 'individual': A `host` is sampled every `sample_freq` time intervals up until they recover
-        #' @param host_class The class used to create hosts. Default is `Host` a subclassed class can be used here instead
-        #' @param strain_class The class used to create strains. Default is `Strain` a subclassed class can be used here instead
+        #' @param groups A vector of `Group` objects (or R6Classes that inherit from `Group`) 
+        #' @param inf_rates A matrix with the same number of rows and columns as there is groups. The entry in the `i`th row and `j`the column is how much infectious pressure an individual in group `i` exerts on an individual in group `j`
+        #' @param lab A `Lab` object (or R6Class that inherits from `Lab`)
         #' 
-        #' @return A new 'Population' object
+        #' @return A `Population` object
         #' 
         initialize = function(
-            id,
-            ref_strain = NULL,
-            init_sus = 99,
-            init_inf = 1,
-            inf_rate = 1,
-            find_infector_method = "transmission",
-            si_shape = NA,
-            si_rate = NA,
-            gt_shape = NA,
-            gt_rate = NA,
-            trans_int_shape = 3, 
-            trans_int_rate = 2, 
-            inc_shape = 3, 
-            inc_rate = 2,
-            rec_shape = 5,
-            rec_rate = 1,
-            max_init_dist = 0,
-            min_init_dist = 0,
-            sample_schedule = "random",
-            sample_freq = NA,
-            host_class = Host,
-            strain_class = Strain
+            groups,
+            inf_rates,
+            lab
         ) {
-            
-            # parameter validations
-            stopifnot(is.numeric(id), id %% 1 == 0, length(id) == 1)
-            stopifnot(any(
-                is.null(ref_strain),
-                "ReferenceStrain" %in% class(ref_strain)
-            ))
 
-            stopifnot(init_sus %% 1 == 0, init_sus >= 0, length(init_sus) == 1)
-            stopifnot(init_inf %% 1 == 0, init_inf >= 0, length(init_inf) == 1)
-
-            stopifnot(is.numeric(inf_rate), 0 < inf_rate, length(inf_rate) == 1)
-
-            stopifnot(find_infector_method %in% c(
-                "serial", 
-                "transmission", 
-                "random",
-                "generation"
-            ))
-            if (find_infector_method == "transmission") {
-                stopifnot(
-                    is.numeric(trans_int_shape), 
-                    trans_int_shape > 0, 
-                    length(trans_int_shape) == 1
-                )
-                stopifnot(
-                    is.numeric(trans_int_rate), 
-                    trans_int_rate > 0, 
-                    length(trans_int_rate) == 1
-                )
-            } else if (find_infector_method == "serial") {
-                stopifnot(
-                    is.numeric(si_shape), 
-                    0 < si_shape, 
-                    length(si_shape) == 1
-                )
-                stopifnot(
-                    is.numeric(si_rate), 
-                    0 < si_rate, 
-                    length(si_rate) == 1
-                )
-            } else if (find_infector_method == "generation") {
-                stopifnot(
-                    is.numeric(gt_shape), 
-                    gt_shape > 0, 
-                    length(gt_shape) == 1
-                )
-                stopifnot(
-                    is.numeric(gt_rate), 
-                    gt_rate > 0, 
-                    length(gt_rate) == 1
-                )
-            }
-
-            stopifnot(
-                is.numeric(inc_shape), 
-                0 <= inc_shape, 
-                length(inc_shape) == 1
-            )
-            stopifnot(
-                is.numeric(inc_rate), 
-                0 < inc_rate, 
-                length(inc_rate) == 1
-            )
-            stopifnot(
-                is.numeric(rec_shape), 
-                0 < rec_shape, 
-                length(rec_shape) == 1
-            )
-            stopifnot(
-                is.numeric(rec_rate), 
-                0 < rec_rate, 
-                length(rec_rate) == 1
-            )
-
-            stopifnot(
-                max_init_dist %% 1 == 0, 
-                max_init_dist >= 0, 
-                length(max_init_dist) == 1
-            )
-            stopifnot(
-                min_init_dist %% 1 == 0, 
-                min_init_dist >= 0, 
-                length(min_init_dist) == 1
-            )
-            stopifnot(max_init_dist >= min_init_dist)
-
-            stopifnot(sample_schedule %in% c("calendar", "individual", "random"))
-            if (sample_schedule %in% c("calendar", "individual")) {
-                stopifnot(
-                    sample_freq %% 1 == 0, 
-                    sample_freq >= 1, 
-                    length(sample_freq) == 1
-                )
-            }
-            
-            stopifnot(is_ancestor_r6class(Host, host_class))
-            stopifnot(is_ancestor_r6class(Strain, strain_class))
-
-            # store variables
-            self$find_infector_method <- find_infector_method
-            self$gt_shape <- gt_shape
-            self$gt_rate <- gt_rate
-            self$id <- id
-            self$inc_rate <- inc_rate
-            self$inc_shape <- inc_shape
-            self$inf_rate <- inf_rate
-            self$init_inf <- init_inf
-            self$init_sus <- init_sus
-            self$max_init_dist <- max_init_dist
-            self$min_init_dist <- min_init_dist
-            self$trans_int_rate <- trans_int_rate
-            self$trans_int_shape <- trans_int_shape
-            self$rec_rate <- rec_rate
-            self$rec_shape <- rec_shape
-            self$ref_strain <- ref_strain
-            self$sample_freq <- sample_freq
-            self$sample_schedule <- sample_schedule
-            self$si_rate <- si_rate
-            self$si_shape <- si_shape
-            
-            private$host_class_ <- host_class
-            private$strain_class_ <- strain_class
-
-            # set up stack of SI, incubation, and transfer interval times
-            private$build_interval_stack()
-
-            # initialise outbreak
-            private$initialise_hosts()
-
-        },
-
-        #' @description
-        #' Get all hosts that are in the exposed compartment at `time`
-        #' 
-        #' @param time The time being querried (Defaults to `population`'s time)
-        #' 
-        #' @return A vector of `Host` objects
-        #' 
-        exposed_hosts = function(time = self$time) {
-
-            stopifnot(is.numeric(time), time %% 1 == 0, length(time) == 1)
-
-            private$hosts_[vapply(
-                private$hosts_, 
-                function(host) host$is_exposed(time),
+            stopifnot(all(vapply(
+                groups,
+                function(group) {"Group" %in% class(group)},
                 logical(1)
-            )]
+            )))
+            group_ids <- vapply(groups, function(p) p$id, numeric(1L))
+            if (any(
+                length(unique(group_ids)) != length(groups),
+                any(group_ids <= 0)
+            )) {
+                stop("ID of each group must be unique and at least 1.")
+            }
+
+            stopifnot(
+                nrow(inf_rates) == length(groups),
+                ncol(inf_rates) == length(groups),
+                is.numeric(inf_rates),
+                all(inf_rates >= 0)
+            )
+            stopifnot("Lab" %in% class(lab))
+            
+            self$inf_rates <- inf_rates
+            self$lab <- lab
+            self$groups <- groups
+            private$group_ids_ <- group_ids
         },
 
-
         #' @description
-        #' Select a `num_infectees` `host`s from the susceptible hosts in this `population`. All susceptible hsots are equally likely to be selected
+        #' Select `host`s from the susceptible hosts in each `groups` by calling `get_infectees()` for each
         #' 
-        #' @param num_infectees An integer indicating the number of susceptible hosts to select
+        #' @param num_infectees A vector of integers indicating how many infectees to select from each group
         #' 
-        #' @return A vector of `Host` objects
-        #' 
-        #' @examples
-        #' ref_strain <- ReferenceStrain$new(name = "ref_strain")
-        #' population <- Population$new(id = 1, ref_strain = ref_strain)
-        #' population$get_infectees(3)
+        #' @return A vector of vectors of `Host` objects
         #' 
         get_infectees = function(num_infectees) {
 
             stopifnot(
                 is.numeric(num_infectees), 
-                num_infectees %% 1 == 0, 
-                length(num_infectees) == 1
+                all(num_infectees %% 1 == 0),
+                length(num_infectees) == length(self$groups)
             )
 
-            infectees <- sample(self$susceptible_hosts(), num_infectees)
+            infectees <- mapply(
+                function(group, new_I) {
+                    group$get_infectees(new_I)
+                },
+                self$groups,
+                num_infectees
+            )
+
             return(infectees)
         },
 
         #' @description
-        #' Select infectors. `find_infector_method` determines how `infector_intervals` is used to find the infectors. The length of `infector_intervals` determines how many infectors are chosen.
+        #' Select infectors from the infectious hosts in each group in `groups` by calling `get_infectors()` for each 
         #' 
-        #' @param infector_intervals A vector of integers indicating how long ago an infector was infected / infectious (depends on `find_infector_method`). If `find_infector_method="random"` then pass a vector of zeros. 
+        #' @param group_of_infectors A vector of  the group id of each infector. 
+        #' @param infector_intervals A vector of integers indicating how long ago each infector was infected / infectious (depends on the `find_infector_method` in each group). If `find_infector_method="random"` then it's a vector of zeros. 
         #' 
         #' @return A vector of `Host` objects
         #' 
-        #' @examples
-        #' ref_strain <- ReferenceStrain$new(name = "ref_strain")
-        #' population <- Population$new(id = 1, ref_strain = ref_strain, init_inf = 10)
-        #' population$get_infectors(c(1, 2))
-        #' population <- Population$new(
-        #'  id = 1, ref_strain = ref_strain, 
-        #'  init_inf = 10, find_infector_method = "random"
-        #' )
-        #' population$get_infectors(c(0, 0, 0))
-        #' 
-        get_infectors = function(infector_intervals) {
+        get_infectors = function(group_of_infectors, infector_intervals) {
 
             stopifnot(
-                is.numeric(infector_intervals), 
-                length(infector_intervals) > 0
+                is.numeric(group_of_infectors),
+                all(group_of_infectors %% 1 == 0),
+                all(group_of_infectors %in% private$group_ids_)
             )
+            stopifnot(
+                is.numeric(infector_intervals),
+                all(infector_intervals >= 0)
+            )
+            stopifnot(length(group_of_infectors) == length(infector_intervals))
 
-            num <- length(infector_intervals)
+            # loop through each group and select infectors
+            # the method for selecting infectors is defined in the Group class
+            infectors <- list()
+            for (group in self$groups) {
+                ind <- which(group_of_infectors == group$id)
 
-            # if there's only one infectious host we have no choice
-            if (self$infectious_size == 1) {
-                return(invisible(rep(self$infectious_hosts(), num)))
-            }
+                # check if any infectors are needed from this group
+                if (length(ind) != 0) {
+                    # currently Group$get_infectors() gets how many infectors to select from the length of the vector passed to it. It doesn't need any otehr  info
 
-            # which method are we using to choose an infector?
-            if (self$find_infector_method == "random") {
-                infectee_ind <- sample(self$infectious_size, num, replace = TRUE)
-
-            } else {
-                # generation, serial or transmission methods
-                # use transmission interval to find infector
-
-                # get time since _____ for all infectious hosts
-                if (self$find_infector_method == "generation") {
-                    time_since <- self$time_since_infectious_hosts_infected
-                } else {
-                    # serial or transmission method
-                    time_since <- self$time_since_infectious_hosts_infectious
+                    infectors[ind] <- group$get_infectors(infector_intervals[ind])
                 }
-
-                # build a matrix with num columns where every column is time_since
-                ts_mat <- replicate(num, time_since)
-                # subtract element i of infector_intervals from col i of ts_mat
-                closest_times <- abs(sweep(ts_mat, 2, infector_intervals))
-                
-                # find the index of the minimum element of each column
-                # randomly sample if more then one element qualifies
-                # these indexes will corespond to the indexes of the current infectives 
-                infectee_ind <- apply(
-                    closest_times,
-                    2,
-                    function(col) {
-                        inds <- which(col == min(col))
-                        inds[sample.int(length(inds), 1)] # catches inds of length 1
-                    }
-                )
             }
-            
-            return(invisible(self$infectious_hosts()[infectee_ind]))
+
+            return(infectors)
         },
 
         #' @description
-        #' Determine number of infectees
+        #' Select the group that each infector comes from
         #' 
-        #' @param foi The force of infection exerted on this population
+        #' @param num_infectees An vector of integers indicating how many infectees to select from each group
+        #' @param fois_mat A force of infection matrix of the same shape and form as inf_rates
         #' 
-        #' @return An integer
+        #' @return A vector of vectors of group ids
         #' 
-        get_num_infectees = function(foi) {
+        get_group_of_infectors = function(num_infectees, fois_mat) {
+
+            # store the number of groups (we'll use this a few times)
+            n <- length(self$groups)
+
             stopifnot(
-                is.numeric(foi), 
-                length(foi) == 1
+                is.numeric(num_infectees), 
+                all(num_infectees %% 1 == 0),
+                length(num_infectees) == n
             )
-            n <- rbinom(1, self$susceptible_size, foi)
+            stopifnot(
+                nrow(fois_mat) == n,
+                ncol(fois_mat) == n,
+                is.numeric(fois_mat),
+                all(fois_mat >= 0),
+                all(fois_mat <= 1)
+            )
 
-            return(n)
+
+            # get the group that the infector for each infectee will come from
+            # for each group use the elements of it's corresponding column in fois_mat for the probabilities of the group of the infectors
+            group_for_infectors <- lapply(
+                seq_along(num_infectees),
+                function(i) {
+                    sample(
+                        n, 
+                        num_infectees[i], 
+                        replace = TRUE, 
+                        fois_mat[i, ]
+                    )
+                }
+            )
+
+            return(group_for_infectors)
         },
 
         #' @description
-        #' Trigger an infection cycle in this `population`. All new infectees (if any) are selected, their infectors are selected and infections of hosts are carried out.
+        #' Determine number of infectees in each group
         #' 
-        #' @return This population object
+        #' @param fois A vector of the force of infection experienced by each group
+        #' 
+        #' @return An vector of integers
+        #' 
+        get_num_infectees = function(fois) {
+            stopifnot(
+                length(fois) == length(self$groups),
+                is.numeric(fois),
+                all(fois >= 0)
+            )
+
+            num_infectes <- mapply(
+                function(group, foi) group$get_num_infectees(foi),
+                self$groups,
+                fois
+            )
+
+            return(num_infectes)
+        },
+
+        #' @description
+        #' Trigger an infection cycle in all `groups`. All new infectees (if any) are selected, their infectors are selected and infections of hosts are carried out.
+        #' 
+        #' @return This `Population` object
         #' 
         infect = function() {
-            
-            #increment time
-            self$time <- self$time + 1
 
-            # get infectees 
-            num_infectees <- self$get_num_infectees(private$force_of_infection())
-            infectees <- self$get_infectees(num_infectees)
+            # get number of infectious for each group
+            inf_sizes <- self$infectious_sizes
+
+            # check if there are any infectives and stop if there isn't
+            if (sum(inf_sizes) == 0) {return(invisible(self))}
+
+            # get FOI matrix
+            fois_mat <- private$force_of_infection(inf_sizes)
             
-            # if no one gets infected stop
+            # get new infectees for each group
+            num_infectees_in_groups <- self$get_num_infectees(rowSums(fois_mat))
+            infectees <- self$get_infectees(num_infectees_in_groups)
+
+
+            # get the group that the infector for each infectee comes from
+            group_for_infectors <- self$get_group_of_infectors(
+                num_infectees_in_groups, 
+                fois_mat
+            )
+
+            # group_for_infectors and infectees are both lists of lists of hosts
+            # we can unlist them now
+            infectees <- unlist(infectees, recursive = FALSE)
+            group_for_infectors <- unlist(group_for_infectors, recursive = FALSE)
+
+            # if there are no infectees then stop
             if (length(infectees) == 0) return(invisible(self))
 
-            # prepare_for_infection infectees
-            trans_ints <- vapply(
+            # prepare infectees for infection
+            infector_intervals <- vapply(
                 infectees,
                 function(infectee) infectee$prepare_for_infection(self$time),
                 numeric(1L)
             )
 
-            # get infectors
-            infectors <- self$get_infectors(trans_ints)
-
-            # infect hosts
+            # get infectors 
+            infectors <- self$get_infectors(
+                group_for_infectors, 
+                infector_intervals
+            )
+           
+            # have infectors infect infectees
             mapply(
                 function(infector, infectee) {
                     infector$infect(infectee, self$time)
                 },
-                infectors, 
+                infectors,
                 infectees
             )
-
-            invisible(self)
-        },
-
-        #' @description
-        #' Get all hosts that are in the infectious compartment at `time`
-        #' 
-        #' @param time The time being querried (Defaults to `population`'s time)
-        #' 
-        #' @return A vector of `Host` objects
-        #' 
-        infectious_hosts = function(time = self$time) {
-
-            stopifnot(is.numeric(time), time %% 1 == 0, length(time) == 1)
-
-            private$hosts_[vapply(
-                private$hosts_, 
-                function(host) host$is_infectious(time),
-                logical(1)
-            )]
-        },
-
-        #' @description
-        #' Print a description of the `Population` object
-        #' 
-        #' @param ... arguments will be ignored
-        #' 
-        #' @return No return value. Description is printed to the console
-        #' 
-        print = function(...) {
-            cat("Population: \n")
-            cat("   Id:                 ", self$id, "\n", sep = "")
-            cat("   Time:               ", self$time, "\n", sep = "")
-            cat("   Population Size:    ", self$size, "\n", sep = "")
-            cat("   Susceptible Hosts:  ", self$susceptible_size, "\n", sep = "")
-            cat("   Exposed Hosts:      ", self$exposed_size, "\n", sep = "")
-            cat("   Infectious Hosts:   ", self$infectious_size, "\n", sep = "")
-            cat("   Recovered Hosts:    ", self$recovered_size, "\n", sep = "")
-        },
-
-        #' @description
-        #' Get all hosts that are in the recovered compartment at `time`
-        #' 
-        #' @param time The time being querried (Defaults to `population`'s time)
-        #' 
-        #' @return A vector of `Host` objects
-        #' 
-        recovered_hosts = function(time = self$time) {
-
-            stopifnot(is.numeric(time), time %% 1 == 0, length(time) == 1)
-
-            private$hosts_[vapply(
-                private$hosts_, 
-                function(host) host$is_recovered(time),
-                logical(1)
-            )]
-        },
-
-        #' @description
-        #' Simulate an outbreak in this population. This is intended to be used if you are siming an outbreak in a single homogenous population. It's recommended that you use an `Outbreak` class if your simulation requires a heterogenous population / groups of hosts 
-        #' 
-        #' @param lab A lab object to collect samples from this population
-        #' @param feedback How frequently to print population summary to the console (turn of by setting to zero)
-        #' 
-        #' @return This `population` object 
-        #' 
-        run_simulation = function(lab, feedback = 10) {
-            stopifnot("Lab" %in% class(lab))
-            stopifnot(
-                is.numeric(feedback), length(feedback) == 1,
-                feedback %% 1 == 0, feedback >= 0
-            )
-
-            # have lab take any samples due at t = 0
-            lab$sample_hosts(self$hosts_due_for_sampling, self$time)
-
-            while (self$is_outbreak_active) {
-                # trigger a round of infections 
-                self$infect()
-                # sample hosts 
-                lab$sample_hosts(self$hosts_due_for_sampling, self$time)
-                
-                # feedback 
-                if (all(
-                    feedback != 0,
-                    self$time %% feedback == 0
-                )) {
-                    print(self)
-                }
-            }
-
-            if (feedback != 0) {
-                print(self)
-                print(lab)
-            }
 
             return(invisible(self))
         },
 
         #' @description
-        #' Get all hosts that are in the susceptible compartment at `time`
+        #' Print a description of this `Population` object
         #' 
-        #' @param time The time being querried (Defaults to `population`'s time)
+        #' @param ... arguments will be ignored
         #' 
-        #' @return A vector of `Host` objects
+        #' @return No return value. Description is printed to the console
         #' 
-        susceptible_hosts = function(time = self$time) {
+        print = function() {
 
-            stopifnot(is.numeric(time), time %% 1 == 0, length(time) == 1)
+            population_data <- data.frame(
+                Size = self$group_sizes,
+                Susceptibles = self$susceptible_sizes,
+                Exposed = self$exposed_sizes,
+                Infectious = self$infectious_sizes,
+                Recovered = self$recovered_sizes
+            )
 
-            private$hosts_[vapply(
-                private$hosts_, 
-                function(host) host$is_susceptible(time),
-                logical(1)
-            )]
-        }
+            
+            cat("Outreak: \n")
+            cat("   Time:                   ", self$time, "\n", sep = "")
+            cat("   Samples Taken:          ", self$num_wgs, "\n", sep = "")
+            cat("   Group Details: \n")
+            writeLines(paste0("         ", capture.output(print(t(population_data)))))
+        },
+
+        #' @description
+        #' Run this simulation.
+        #' 
+        #' @param feedback How frequently to print group summary to the console (default 10)
+        #' 
+        #' @return This `Population` object 
+        #' 
+        run_simulation = function(feedback = 5) {
+
+            stopifnot(is.numeric(feedback), length(feedback) == 1, feedback %% 1 == 0)
+
+            # first have lab perform samples due at t = 0
+            self$sample_groups()
+            
+            while (self$is_outbreak_active) {
+
+                # increment time for self and for each group
+                self$time <- self$time + 1
+                private$align_group_times()
+
+                # trigger a round of infections
+                self$infect()
+
+                # have lab take samples
+                self$sample_groups()
+
+                # give feedback if wanted
+                if (feedback != 0) {
+                    if (self$time %% feedback == 0) {
+                        self$print()
+                    } 
+                }
+            }
+
+            if (feedback != 0) self$print()
+    
+            return(invisible(self))
+        },
+
+        #' @description
+        #' Collect samples from `host`s in every group that are due for sampling
+        #' 
+        #' @return This `Population` object
+        #' 
+        sample_groups = function() {
+
+            # get hosts that are due sampling
+
+            hosts <- self$hosts_due_for_sampling
+            self$lab$sample_hosts(hosts, self$time)
+
+            return(invisible(self))
+        }#,
 
     ),
 
     ###########################################################################
     # active bindings
-
     active = list(
 
-        #' @field exposed_size The number of hosts in the exposed compartment at the populations current time
-        exposed_size = function(v) {
-            if (missing(v)) length(self$exposed_hosts())
-            else stop("Can't set `$exposed_size`", call. = FALSE)
-        },
-
-        #' @field hosts All host objects in a vector
-        hosts = function(v) {
-            if (missing(v)) private$hosts_
-            else stop("Can't set `$hosts`", call. = FALSE)
-        },
-
-        #' @field hosts_due_for_sampling A vector of hosts that are due for sampling at the population's current time 
-        hosts_due_for_sampling = function(v) {
+        #' @field exposed_sizes The number of hosts in the exposed compartment in each group
+        exposed_sizes = function(v) {
 
             if (missing(v)) {
-                private$hosts_[vapply(
-                    private$hosts_, 
-                    function(host) host$is_sampling_due(self$time),
-                    logical(1)
-                )]
+                vapply(
+                    self$groups,
+                    function(group) {group$exposed_size},
+                    integer(1)
+                )
+            } else {stop("Can't set `$ exposed_sizes`.", call. = FALSE)}
+        },
+
+        #' @field hosts_due_for_sampling A vector of hosts from all groups that are due sampling at the current time
+        hosts_due_for_sampling = function(v) {
             
+            if (missing(v)) {
+                hosts <- lapply(
+                    self$groups, 
+                    function(group) group$hosts_due_for_sampling
+                )
+                hosts <- unlist(hosts, recursive = FALSE)
+
+                return(hosts)
             } else {stop("Can't set `$get_hosts_due_for_sampling`", call. = FALSE)}
         },
-        
-        #' @field is_outbreak_active Logical indicating if there are still exposed or infectious individuals at the population's current time
+
+        #' @field is_outbreak_active Logical indicating if there is any host in any group that is still in the exposed or infectious compartment
         is_outbreak_active = function(v) {
-            if (missing(v)) {!all(
-                self$exposed_size == 0,
-                self$infectious_size == 0
-            )}
-            else stop("Can't set `$is_outbreak_active`", call. = FALSE)
-        },
-
-        #' @field infectious_size The number of hosts in the infectious compartment at the populations current time
-        infectious_size = function(v) {
-            if (missing(v)) length(self$infectious_hosts())
-            else stop("Can't set `$infectious_size`", call. = FALSE)
-            
-        },
-
-        #' @field pop_interval_stack Pop a set of intervals from the interval stack. The interval stack is a preprepared set of at least incubation periods and the interval being used to find an infector (serial interval and generation time are also present if that method is being used)
-        pop_interval_stack = function(v) {
             if (missing(v)) {
-                if (nrow(private$interval_stack_) == 0) {
-                    stop("interval_stack is empty")
-                }
-
-                ints <- private$interval_stack_[1, ]
-                private$interval_stack_ <- private$interval_stack_[-1, ]
-
-                return(ints)
-            } else stop("Can't set `$recovered_size`", call. = FALSE)
+                any(vapply(
+                    self$groups, 
+                    function(group) {group$is_outbreak_active},
+                    logical(1L)
+                ))
+            } else {stop("Can't set `$is_outbreak_active`.", call. = FALSE)}
         },
 
-        #' @field recovered_size The number of hosts in the recovered compartment at the populations current time
-        recovered_size = function(v) {
-            if (missing(v)) length(self$recovered_hosts())
-            else stop("Can't set `$recovered_size`", call. = FALSE)
-            
+        #' @field infectious_sizes The number of hosts in the infectious compartment in each group
+        infectious_sizes = function(v) {
+            # get number of infectious in each group
+            if (missing(v)) {
+                vapply(
+                    self$groups,
+                    function(group) {group$infectious_size},
+                    integer(1)
+                )
+            } else {stop("Can't set `$ infectious_sizes`.", call. = FALSE)}
         },
 
-        #' @field susceptible_size The number of hosts in the susceptible compartment at the populations current time
-        susceptible_size = function(v) {
-            if (missing(v)) length(self$susceptible_hosts())
-            else stop("Can't set `$susceptible_size`", call. = FALSE)
-            
+        #' @field recovered_sizes The number of hosts in the recovered compartment in each group
+        recovered_sizes = function(v) {
+            # get number of recovered in each group
+            if (missing(v)) {
+                vapply(
+                    self$groups,
+                    function(group) {group$recovered_size},
+                    integer(1)
+                )
+            } else {stop("Can't set `$recovered_sizes`.", call. = FALSE)}
         },
 
-        #' @field outbreak_size The number of infected so far
+        #' @field susceptible_sizes The number of hosts in the susceptible compartment in each group
+        susceptible_sizes = function(v) {
+            # get number of susceptible in each group
+            if (missing(v)) {
+                vapply(
+                    self$groups,
+                    function(group) {group$susceptible_size},
+                    integer(1)
+                )
+            } else {stop("Can't set `$susceptible_sizes`.", call. = FALSE)}
+        },
+
+        #' @field num_wgs The number of whole genome sequences collected so far
+        num_wgs = function(v) {
+            # get number of tests run by lab
+            if (missing(v)) {
+                self$lab$num_wgs
+            } else {stop("Can't set `$num_wgs`.", call. = FALSE)}
+        },
+
+        #' @field outbreak_size The number of non_susceptible hosts across all groups
         outbreak_size = function(v) {
+            # get the outbreak size across all groups
             if (missing(v)) {
-                self$exposed_size + self$infectious_size + self$recovered_size
-            }
-            else stop("Can't set `$outbreak_size`", call. = FALSE)
-            
+                sum(self$group_outbreak_sizes)
+            } else {stop("Can't set `$outbreak_size`.", call. = FALSE)}
         },
 
-        #' @field size The population size
-        size = function(v) {
-            # get population size
+        #' @field group_outbreak_sizes The number of non_susceptible hosts in each group
+        group_outbreak_sizes = function(v) {
+            # get the outbreak size across all groups
             if (missing(v)) {
-                length(private$hosts_)
-            }
-            else stop("Can't set `$size`", call. = FALSE)
+                vapply(
+                    self$groups,
+                    function(group) {group$outbreak_size},
+                    integer(1L)
+                )
+            } else {stop("Can't set `$group_outbreak_sizes`.", call. = FALSE)}
         },
 
-        #' @field time_since_infectious_hosts_infected A vector containing the time elapsed wince all currently infectious hosts were infected
-        time_since_infectious_hosts_infected = function(v) {
+        #' @field group_sizes The size of each group
+        group_sizes = function(v) {
+            # get size of each group
             if (missing(v)) {
                 vapply(
-                    self$infectious_hosts(),
-                    function(host) {
-                        self$time - host$exposure_time
-                    },
-                    numeric(1)
+                    self$groups,
+                    function(group) {group$size},
+                    double(1)
                 )
-            }
-        },
-        
-        #' @field time_since_infectious_hosts_infectious A vector containing the time elapsed wince all currently infectious hosts became infectious
-        time_since_infectious_hosts_infectious = function(v) {
-            if (missing(v)) {
-                vapply(
-                    self$infectious_hosts(),
-                    function(host) {
-                        self$time - host$infectious_time
-                    },
-                    numeric(1)
-                )
-            }
+            } else {stop("Can't set `$group_sizes`.", call. = FALSE)}
         }
-        
+
     ),
 
     ###########################################################################
     # private members
+    private = list( 
 
-    private = list(
+        group_ids_ = c(),
 
-        #######################################################################
-        # private variables 
-        host_class_ = NULL,
-        hosts_ = NULL,
-        strain_class_ = NULL,
-        interval_stack_ = NULL,
+        #' @description
+        #' align all group's time to this populations time
+        #' 
+        #' @return This `population` object 
+        #'
+        #' @noRd 
+        align_group_times = function() {
+            # align each Group's time to Population's time
+            vapply(
+                self$groups,
+                function(group) {
+                    group$time <- self$time
+                    TRUE
+                },
+                logical(1L)
+            )
 
-        #######################################################################
-        # private functions
-
-        # @description
-        # Generate a stack of intervals for hosts to use. At a minimum it will contain an incubation period and an "infector interval". The infector interval will be quantity used to find infectors for an infectee. Depending on the value of `find_infector_method` this stack may also contain a serial interval or generation time
-        # 
-        # 
-        # @return No return value
-        # 
-        build_interval_stack = function() {
-
-            n <- self$init_inf + self$init_sus
-            factor <- 20
-
-            if (self$find_infector_method == "serial") {
-                interval_stack <- data.frame(
-                    si = stats::rgamma(
-                        factor * n, 
-                        shape = self$si_shape, 
-                        rate = self$si_rate
-                    ),
-                    inc = stats::rgamma(
-                        factor * n, 
-                        shape = self$inc_shape, 
-                        rate = self$inc_rate
-                    )
-                )
-                interval_stack$infector_interval <- (
-                    interval_stack$si  - interval_stack$inc
-                ) 
-
-            } else if (self$find_infector_method == "transmission") {
-                interval_stack <- data.frame(
-                    inc = stats::rgamma(
-                        n, 
-                        shape = self$inc_shape, 
-                        rate = self$inc_rate
-                    ),
-                    infector_interval = stats::rgamma(
-                        n, 
-                        shape = self$trans_int_shape, 
-                        rate = self$trans_int_rate
-                    )
-                )
-            } else if (self$find_infector_method == "random") {
-                interval_stack <- data.frame(
-                    inc = stats::rgamma(
-                        n, 
-                        shape = self$inc_shape, 
-                        rate = self$inc_rate
-                    ),
-                    infector_interval = rep.int(0, n)
-                )
-            } else if (self$find_infector_method == "generation") {
-                interval_stack <- data.frame(
-                    inc = stats::rgamma(
-                        n, 
-                        shape = self$inc_shape, 
-                        rate = self$inc_rate
-                    ),
-                    infector_interval = stats::rgamma(
-                        n, 
-                        shape = self$gt_shape,
-                        rate = self$gt_rate
-                    )
-                )
-            }
-
-            neg_bools <- interval_stack$infector_interval < 0
-
-            # how many negative transmission intervals are there?
-            if (sum(neg_bools) > factor * n / 2) {
-                warning(
-                    "Parameters provided for serial interval and incubation period produce a negative transmission interval more then 50 % of the time. This may alter the expected distribution of the transmission interval. Please consider changing the parameters provided.",
-                    immediate. = TRUE
-                )
-            }
-            # drop the negative values
-            interval_stack <- interval_stack[! neg_bools, ]
-
-            # only keep one row for each host
-            private$interval_stack_ <- utils::head(interval_stack, n)
-
-            return(NULL)
+            return(invisible(self))
         },
 
-        # @description
-        # Initialise infections in index hosts
-        # 
-        # @param host The `Host` object being initialised
-        # @param variation Logical indicating if the strain infecting this host can have variations in it's genome compared to `ref_strain`
-        # 
-        # @return TRUE: The motivation for this is that we can call this function for many hosts with vapply if we know what the return value will be, so we've made it something small 
-        # 
-        initialise_index_host = function(host, variation = TRUE) {
-            
-            # decide strain's genomic distance from reference strain
-            if (variation) {
-                distance <- private$initial_genomic_distance()
-            } else {
-                distance <- 0
-            }
+        #' @description
+        #' Calculate the force_of_infectious matrix
+        #' 
+        #' @param inf_sizes The number of infectious hosts in each group
+        #' 
+        #' @return A matrix
+        #' 
+        #' @noRd 
+        force_of_infection = function(inf_sizes) {
+            # calculate the force of infection matrix. 
+            # Each element will be of the form beta_{ij}*I_j/N 
 
-            # prepare_for_infection 
-            host$prepare_for_infection(time = 0, initial = TRUE)
-            # now pass on strain
-            host$contract_strains(
-                infector = NULL,
-                # time = 0,
-                strains = c(private$strain_class_$new(self$ref_strain, 0, distance)),
-                freq = c(1)#,
-                # initial = TRUE
-            )        
+            beta_I <- sweep(self$inf_rates, MARGIN = 2, inf_sizes, "*") 
+            foi_mat <- beta_I / sum(self$group_sizes)
 
-            return(TRUE)
-        },
-
-        # @description
-        # Initialise all host objects and then initialise infections in the index cases
-        # 
-        # @return TRUE: The motivation for this is that we can call this function for many hosts with vapply if we know what the return value will be, so we've made it something small 
-        # 
-        initialise_hosts = function() {
-
-            # can't use the self$size function here as that function requires the hosts to have been initialised
-            pop_size <- self$init_sus + self$init_inf
-            
-            # create all host objects
-            private$hosts_ <- lapply(
-                c(1:pop_size), 
-                private$host_class_$new,
-                population = self
-            ) 
-
-            # randomly select indexes of initial infectives
-            index_hosts <- sample(private$hosts_, self$init_inf, replace = FALSE)
-
-            # set up strains in infectives to start outbreak
-            # infectives is a vector containing the indices of the initial infectives
-            if (self$init_inf == 1) {
-                # only one strain needed - don't create variation
-                private$initialise_index_host(index_hosts[[1]], variation = FALSE)
-            
-            } else {
-                # multiple initial hosts
-                vapply(index_hosts, private$initialise_index_host, logical(1L))
-            }
-
-            return(NULL)
-        },
-
-        # @description
-        # Calculate the force of infection experienced by each individual in this population
-        # 
-        # @return The force of infection (numeric)
-        # 
-        force_of_infection = function() {
-            self$inf_rate * self$infectious_size / self$size
-        },
-
-        # @description
-        # Calculate the initial genomic distance of a strain from the reference strain
-        # 
-        # @return An integer
-        # 
-        initial_genomic_distance = function() {
-            self$min_init_dist + sample(self$max_init_dist - self$min_init_dist, 1)
+            return(foi_mat)
         }
     )
 )

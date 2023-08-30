@@ -2,30 +2,30 @@
 % Please edit documentation in R/plot-transmission_tree.R
 \name{transmission_tree_edges}
 \alias{transmission_tree_edges}
-\title{Get a dataframe of all edges in a outbreak transmission tree}
+\title{Get a dataframe of all edges in an outbreak transmission tree}
 \usage{
 transmission_tree_edges(x)
 }
 \arguments{
-\item{x}{An Outbreak or Population object that has had it's outbreak simulated}
+\item{x}{A Population or Group object that has had it's outbreak simulated}
 }
 \value{
 A dataframe
 }
 \description{
-Get a dataframe of all edges in a outbreak transmission tree
+Get a dataframe of all edges in an outbreak transmission tree
 }
 \examples{
 set.seed(1)
 ref_strain <- ReferenceStrain$new("ref_strain")
-population <- Population$new(
+group <- Group$new(
      1, 
      ref_strain, 
      inf_rate = 0.75, 
      find_infector_method = "serial", 
      si_shape = 6, si_rate = 1
 )
-population$run_simulation(Lab$new())
-edges <- transmission_tree_edges(population)
+group$run_simulation(Lab$new())
+edges <- transmission_tree_edges(group)
 
 }

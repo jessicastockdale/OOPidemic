@@ -6,8 +6,8 @@
 #' 
 #' @examples 
 #' ref_strain <- ReferenceStrain$new("ref_strain")
-#' pop <- Population$new(1, ref_strain)
-#' host <- pop$infectious_hosts()[[1]]
+#' grp <- Group$new(1, ref_strain)
+#' host <- grp$infectious_hosts()[[1]]
 #' strain <- host$strains[[1]]
 #' wgs <- WGSequence$new(1, strain, host)
 #' 
@@ -129,12 +129,12 @@ WGSequence <- R6::R6Class("WGSequence",
             else stop("Can't set `$is_dna`", call. = FALSE)
         },
 
-        #' @field metadata Returns a named list of data about this sequence: `name`, `host`'s population id, `hosts`'s id, `ref_strain`'s name, `collection_time`, and `sample_number` 
+        #' @field metadata Returns a named list of data about this sequence: `name`, `host`'s group id, `hosts`'s id, `ref_strain`'s name, `collection_time`, and `sample_number` 
         metadata = function(v) {
             if (missing(v)) {
                 list(
                     name = self$name,
-                    population = private$host_$population$id,
+                    group = private$host_$group$id,
                     host = private$host_$id,
                     ref_strain = private$ref_strain_$name,
                     collection_time = private$time_,
@@ -143,11 +143,11 @@ WGSequence <- R6::R6Class("WGSequence",
             } else stop("Can't set `$metadata`", call. = FALSE)
         },
 
-        #' @field name String in the form `<pop_id>_<host_id>_<time>_<sample_number>` padded to have up to 1, 3, 3, and 1 leading zeros respectively
+        #' @field name String in the form `<group_id>_<host_id>_<time>_<sample_number>` padded to have up to 1, 3, 3, and 1 leading zeros respectively
         name = function(v) {
             if (missing(v)) {
                 paste0(
-                    sprintf("%02d", private$host_$population$id), "_",
+                    sprintf("%02d", private$host_$group$id), "_",
                     sprintf("%04d", private$host_$id), "_",
                     sprintf("%04d", private$time_), "_",
                     sprintf("%02d", private$sample_num_)

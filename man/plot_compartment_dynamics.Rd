@@ -8,17 +8,17 @@ plot_compartment_dynamics(
   x,
   frequency = 1,
   combine = FALSE,
-  population_labels = NULL
+  group_labels = NULL
 )
 }
 \arguments{
-\item{x}{An Outbreak or Population object that has had it's outbreak simulated}
+\item{x}{A Population or Group object that has had it's outbreak simulated}
 
 \item{frequency}{Integer indicating how frequently the compartment sizes should be measured}
 
-\item{combine}{A boolean indicating if compartment sizes for different populations should be combined (only has an effect if an Outbreak object with multiple populations is provided)}
+\item{combine}{A boolean indicating if compartment sizes for different groups should be combined (only has an effect if an Population object with multiple groups is provided)}
 
-\item{population_labels}{A vector of strings used to label multiple populations. Should be in the same order as the populations in the Outbreak object. (similarly to combine, this only has an effect if an outbreak with multiple populations is provided)}
+\item{group_labels}{A vector of strings used to label multiple groups. Should be in the same order as the groups in the Population object. (similarly to combine, this only has an effect if a population with multiple groups is provided)}
 }
 \value{
 A ggplot object
@@ -27,29 +27,29 @@ A ggplot object
 Plot S(E)IR compartment dynamics for disease outbreak
 }
 \examples{
-# An SIR model outbreak in a single homogenous population
+# An SIR model outbreak in a single homogenous group
 set.seed(1)
 ref_strain <- ReferenceStrain$new("ref_strain")
-population <- Population$new(1, ref_strain, inf_rate = 0.75, inc_shape = 0)
-lab_pop <- Lab$new()
-population$run_simulation(lab_pop)
-plot_compartment_dynamics(population)
+group <- Group$new(1, ref_strain, inf_rate = 0.75, inc_shape = 0)
+lab_group <- Lab$new()
+group$run_simulation(lab_group)
+plot_compartment_dynamics(group)
 
-# An SEIR model outbreak with two populations
+# An SEIR model outbreak ina population with two groups
 set.seed(1)
 ref_strain <- ReferenceStrain$new("ref_strain")
-outbreak <- Outbreak$new(
+population <- Population$new(
     c(
-        Population$new(1, ref_strain, init_inf = 5, init_sus = 95),
-        Population$new(2, ref_strain, init_inf = 0, init_sus = 100)
+        Group$new(1, ref_strain, init_inf = 5, init_sus = 95),
+        Group$new(2, ref_strain, init_inf = 0, init_sus = 100)
     ),
     matrix(c(0.75, 0.5, 0.25, 0.1), ncol = 2),
     Lab$new()
 )
-outbreak$run_simulation()
-# plot each population separately
-plot_compartment_dynamics(outbreak, population_labels = c("Senior", "Adult"))
-# plot populations combined
-plot_compartment_dynamics(outbreak, combine = TRUE)
+population$run_simulation()
+# plot each group separately
+plot_compartment_dynamics(population, group_labels = c("Senior", "Adult"))
+# plot groups combined
+plot_compartment_dynamics(population, combine = TRUE)
 
 }

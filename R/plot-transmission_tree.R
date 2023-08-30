@@ -42,7 +42,7 @@ node_title <- function(host) {
     paste0(
         "<p>",
             "<b>ID:</b>         ", host$id, "<br>",
-            "<b>Population:</b> ", host$population$id, "<br>",
+            "<b>Group:</b> ", host$group$id, "<br>",
             "<b>Exposure Time:</b> ", host$exposure_time, "<br>",
             "<b>Infectious Time:</b> ", host$infectious_time, "<br>",
             "<b>Recovery Time:</b> ", host$recovery_time, "<br>",
@@ -76,31 +76,31 @@ interval <- function(host, interval) {
     }
 }
 
-#' Build a dataframe of nodes for a population
+#' Build a dataframe of nodes for a group
 #'
-#' @param population A Population object
+#' @param group A Group object
 #' 
 #' @return A dataframe with the following columns
-#'  * `group` The population that the host is in
-#'  * `id` A node id with the form <host$population$id>-<host$id>
+#'  * `group` The group that the host is in
+#'  * `id` A node id with the form <host$group$id>-<host$id>
 #'  * `level` The level of the node in the tree
 #'  * `label` The label of the node. Host id is used here
 #'  * `shape` The shape of the node
 #'  * `title` The title displayed when a visNetwork node is hovered over
 #'
 #' @noRd 
-population_nodes <- function(population) {
+group_nodes <- function(group) {
     
-    infected_hosts <- population$hosts[vapply(
-        population$hosts, 
-        function(host) !host$is_susceptible(population$time),
+    infected_hosts <- group$hosts[vapply(
+        group$hosts, 
+        function(host) !host$is_susceptible(group$time),
         logical(1L)
     )]
     
     id <- vapply(infected_hosts, function(host) host$id, integer(1L))
     nodes <- data.frame(
-        group = rep(population$id, length(infected_hosts)),
-        id = paste0(population$id, "-", as.character(id)),
+        group = rep(group$id, length(infected_hosts)),
+        id = paste0(group$id, "-", as.character(id)),
         level = vapply(infected_hosts, node_level, integer(1L)),
         label = as.character(id),
         shape = vapply(infected_hosts, node_shape, character(1L)),
@@ -109,9 +109,9 @@ population_nodes <- function(population) {
     return(nodes)
 }
 
-#' Build a dataframe of edges for a population
+#' Build a dataframe of edges for a group
 #'
-#' @param population A Population object
+#' @param group A Group object
 #' 
 #' @return A dataframe with the following columns
 #'  * `from`  id of the node that the edge comes from
@@ -121,11 +121,11 @@ population_nodes <- function(population) {
 #'  * `transmission_interval` The transmission interval for this infector / infectee pair (NA if the infectee is an index case)
 #' 
 #' @noRd 
-population_edges <- function(population) {
+group_edges <- function(group) {
 
-    infected_hosts <- population$hosts[vapply(
-        population$hosts, 
-        function(host) !host$is_susceptible(population$time),
+    infected_hosts <- group$hosts[vapply(
+        group$hosts, 
+        function(host) !host$is_susceptible(group$time),
         logical(1L)
     )]
 
@@ -135,14 +135,14 @@ population_edges <- function(population) {
             infected_hosts, 
             function(host) {
                 if (!host$is_index) {
-                    paste0(host$infector$population$id, "-", host$infector$id)
+                    paste0(host$infector$group$id, "-", host$infector$id)
                 } else {
                     ""
                 }
             },
             character(1L)
         ),
-        to = paste0(population$id, "-", as.character(to_id)),
+        to = paste0(group$id, "-", as.character(to_id)),
         serial_interval = vapply(infected_hosts, interval, numeric(1L), interval = "serial"),
         generation_time = vapply(infected_hosts, interval, numeric(1L), interval = "generation"),
         transmission_interval = vapply(infected_hosts, interval, numeric(1L), interval = "transmission")
@@ -151,30 +151,30 @@ population_edges <- function(population) {
     return(edges)
 }
 
-#' Build a dataframe of nodes for an outbreak
+#' Build a dataframe of nodes for an population
 #'
-#' @param population An Outbreak object
+#' @param group A Population object
 #' 
-#' @return A dataframe with the same columns as population_nodes
+#' @return A dataframe with the same columns as `group_nodes()`
 #' 
 #' @noRd 
-outbreak_nodes <- function(outbreak) {
+population_nodes <- function(population) {
 
-    nodes <- do.call(rbind, lapply(outbreak$populations, population_nodes))
+    nodes <- do.call(rbind, lapply(population$groups, group_nodes))
 
     return(nodes)
 }
 
-#' Build a dataframe of edges for an outbreak
+#' Build a dataframe of edges for an population
 #'
-#' @param population An Outbreak object
+#' @param group A Population object
 #' 
-#' @return A dataframe with the same columns as population_edges
+#' @return A dataframe with the same columns as `group_edges()`
 #' 
 #' @noRd 
-outbreak_edges <- function(outbreak) {
+population_edges <- function(population) {
 
-    edges <- do.call(rbind, lapply(outbreak$populations, population_edges))
+    edges <- do.call(rbind, lapply(population$groups, group_edges))
 
     return(edges)
 }
@@ -183,9 +183,9 @@ outbreak_edges <- function(outbreak) {
 # exported functions
 ###############################################################################
 
-#' Get a dataframe of all nodes in a outbreak transmission tree
+#' Get a dataframe of all nodes in an outbreak transmission tree
 #' 
-#' @param x An Outbreak or Population object that has had it's outbreak simulated
+#' @param x A Population or Group object that has had it's outbreak simulated
 #'
 #' @return A dataframe
 #' @export
@@ -193,34 +193,34 @@ outbreak_edges <- function(outbreak) {
 #' @examples 
 #' set.seed(1)
 #' ref_strain <- ReferenceStrain$new("ref_strain")
-#' population <- Population$new(
+#' group <- Group$new(
 #'      1, 
 #'      ref_strain, 
 #'      inf_rate = 0.75, 
 #'      find_infector_method = "serial", 
 #'      si_shape = 6, si_rate = 1
 #' )
-#' population$run_simulation(Lab$new())
-#' nodes <- transmission_tree_nodes(population)
+#' group$run_simulation(Lab$new())
+#' nodes <- transmission_tree_nodes(group)
 #' 
 transmission_tree_nodes <- function(x) {
 
     # validations for x
     stopifnot(R6::is.R6(x))
-    if ("Population" %in% class(x)) {
+    if ("Group" %in% class(x)) {
+        nodes <- group_nodes(x)
+    } else if ("Population" %in% class(x)) {
         nodes <- population_nodes(x)
-    } else if ("Outbreak" %in% class(x)) {
-        nodes <- outbreak_nodes(x)
     } else {
-        stop("`x` must be an Outbreak or Population object")
+        stop("`x` must be an Population or Group object")
     }
 
     return(nodes)
 }
 
-#' Get a dataframe of all edges in a outbreak transmission tree
+#' Get a dataframe of all edges in an outbreak transmission tree
 #' 
-#' @param x An Outbreak or Population object that has had it's outbreak simulated
+#' @param x A Population or Group object that has had it's outbreak simulated
 #'
 #' @return A dataframe
 #' @export
@@ -228,26 +228,26 @@ transmission_tree_nodes <- function(x) {
 #' @examples 
 #' set.seed(1)
 #' ref_strain <- ReferenceStrain$new("ref_strain")
-#' population <- Population$new(
+#' group <- Group$new(
 #'      1, 
 #'      ref_strain, 
 #'      inf_rate = 0.75, 
 #'      find_infector_method = "serial", 
 #'      si_shape = 6, si_rate = 1
 #' )
-#' population$run_simulation(Lab$new())
-#' edges <- transmission_tree_edges(population)
+#' group$run_simulation(Lab$new())
+#' edges <- transmission_tree_edges(group)
 #' 
 transmission_tree_edges <- function(x) {
 
     # validations for x
     stopifnot(R6::is.R6(x))
-    if ("Population" %in% class(x)) {
+    if ("Group" %in% class(x)) {
+        edges <- group_edges(x)
+    } else if ("Population" %in% class(x)) {
         edges <- population_edges(x)
-    } else if ("Outbreak" %in% class(x)) {
-        edges <- outbreak_edges(x)
     } else {
-        stop("`x` must be an Outbreak or Population object")
+        stop("`x` must be an Population or Group object")
     }
 
     return(edges)
@@ -255,7 +255,7 @@ transmission_tree_edges <- function(x) {
 
 #' Plot a transmission tree for a disease outbreak
 #' 
-#' @param x An Outbreak or Population object that has had it's outbreak simulated
+#' @param x A Population or Group object that has had it's outbreak simulated
 #' @param rooted Logical. Should the tree be rooted at the index cases 
 #' @param edge_length Which interval the edge lengths should be proportional to
 #'  * "serial": Use serial interval
@@ -268,36 +268,35 @@ transmission_tree_edges <- function(x) {
 #' @export
 #' 
 #' @examples
-#' # An SEIR model outbreak in a single homogenous population using the 
+#' # An SEIR model outbreak in a single homogenous group using the 
 #' # serial interval method to find infectors
 #' set.seed(1)
 #' ref_strain <- ReferenceStrain$new("ref_strain")
-#' population <- Population$new(
+#' group <- Group$new(
 #'      1, 
 #'      ref_strain, 
 #'      inf_rate = 0.75, 
 #'      find_infector_method = "serial", 
 #'      si_shape = 6, si_rate = 1
 #' )
-#' population$run_simulation(Lab$new())
-#' figure <- plot_transmission_tree(population, rooted = FALSE, edge_length = "serial")
+#' group$run_simulation(Lab$new())
+#' figure <- plot_transmission_tree(group, rooted = FALSE, edge_length = "serial")
 #' print(figure)
 #' 
-#' # An SEIR model outbreak with two populations using the tranmission method 
+#' # An SEIR model outbreak in a population with two groups using the tranmission method 
 #' # for finding infectors.
-#' # The two populations will have different transmission interval shapes
 #' set.seed(1)
-#' outbreak <- Outbreak$new(
+#' population <- Population$new(
 #'     c(
-#'         Population$new(1, ref_strain, init_inf = 5, init_sus = 95),
-#'         Population$new(2, ref_strain, init_inf = 0, init_sus = 100)
+#'         Group$new(1, ref_strain, init_inf = 5, init_sus = 95),
+#'         Group$new(2, ref_strain, init_inf = 0, init_sus = 100)
 #'     ),
 #'     matrix(c(0.75, 0.5, 0.25, 0.1), ncol = 2),
 #'     Lab$new()
 #' )
-#' outbreak$run_simulation(0)
+#' population$run_simulation(0)
 #' 
-#' figure <- plot_transmission_tree(outbreak)
+#' figure <- plot_transmission_tree(population)
 #' print(figure)
 #' 
 plot_transmission_tree <- function(x, rooted = TRUE, edge_length = "transmission") {
