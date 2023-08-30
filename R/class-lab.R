@@ -47,7 +47,6 @@ Lab <- R6::R6Class("Lab",
         #' 
         print = function(...) {
             cat("Lab: \n")
-            cat("   Id:             ", private$id_, "\n", sep = "")
             cat("   WG Sequences:   ", self$num_wgs, "\n", sep = "")
 
         },
