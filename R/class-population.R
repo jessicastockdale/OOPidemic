@@ -479,12 +479,11 @@ Population <- R6::R6Class("Population",
 
         group_ids_ = c(),
 
-        #' @description
-        #' align all group's time to this populations time
-        #' 
-        #' @return This `population` object 
-        #'
-        #' @noRd 
+        # @description
+        # align all group's time to this populations time
+        # 
+        # @return This `population` object 
+        #
         align_group_times = function() {
             # align each Group's time to Population's time
             vapply(
@@ -499,14 +498,14 @@ Population <- R6::R6Class("Population",
             return(invisible(self))
         },
 
-        #' @description
-        #' Calculate the force_of_infectious matrix
-        #' 
-        #' @param inf_sizes The number of infectious hosts in each group
-        #' 
-        #' @return A matrix
-        #' 
-        #' @noRd 
+        # @description
+        # Calculate the force_of_infectious matrix
+        # 
+        # @param inf_sizes The number of infectious hosts in each group
+        # 
+        # @return A matrix
+        # 
+        # @noRd 
         force_of_infection = function(inf_sizes) {
             # calculate the force of infection matrix. 
             # Each element will be of the form beta_{ij}*I_j/N 
