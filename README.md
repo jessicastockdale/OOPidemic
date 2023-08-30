@@ -1,17 +1,17 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# oooutbreak
+# OOPidemic
 
 <!-- badges: start -->
 
 <!-- badges: end -->
 
-The goal of oooutbreak is to …
+The goal of OOPidemic is to …
 
 ## Installation
 
-You can install the development version of oooutbreak like so:
+You can install the development version of OOPidemic like so:
 
 ``` r
 # FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
@@ -22,7 +22,7 @@ You can install the development version of oooutbreak like so:
 This is a basic example which shows you how to solve a common problem:
 
 ``` r
-library(oooutbreak)
+library(OOPidemic)
 ## basic example code
 ```
 

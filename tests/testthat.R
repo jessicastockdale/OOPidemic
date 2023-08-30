@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(oooutbreak)
+library(OOPidemic)
 
-test_check("oooutbreak")
+test_check("OOPidemic")
