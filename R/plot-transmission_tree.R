@@ -1,6 +1,13 @@
 ###############################################################################
 # support functions
 
+#' Get the level of a host's node in a transmission tree
+#'
+#' @param host A Host object
+#' 
+#' @return Integer
+#'
+#' @noRd 
 node_level <- function(host) {
 
     # base case
@@ -10,11 +17,27 @@ node_level <- function(host) {
     return(node_level(host$infector) + 1L)
 }
 
+#' Get the shape of a host's node in a transmission tree
+#' 
+#' @description A index case will have a square node and all other hosts will have a circular node
+#'
+#' @param host A Host object
+#' 
+#' @return character
+#'
+#' @noRd 
 node_shape <- function(host) {
     if (host$is_index) "square"
     else "circle"
 }
 
+#' Get the title of a host's node in a transmission tree
+#'
+#' @param host A Host object
+#' 
+#' @return character
+#'
+#' @noRd 
 node_title <- function(host) {
     paste0(
         "<p>",
@@ -29,6 +52,14 @@ node_title <- function(host) {
     )
 }
 
+#' Get an interval for a host
+#'
+#' @param host A Host object (infected hosts only!)
+#' @param interval The interval wanted: "serial", "generation", or "transmission" (default)
+#' 
+#' @return An integer
+#'
+#' @noRd 
 interval <- function(host, interval) {
     if (host$is_index) NA
     else {
@@ -45,6 +76,19 @@ interval <- function(host, interval) {
     }
 }
 
+#' Build a dataframe of nodes for a population
+#'
+#' @param population A Population object
+#' 
+#' @return A dataframe with the following columns
+#'  * `group` The population that the host is in
+#'  * `id` A node id with the form <host$population$id>-<host$id>
+#'  * `level` The level of the node in the tree
+#'  * `label` The label of the node. Host id is used here
+#'  * `shape` The shape of the node
+#'  * `title` The title displayed when a visNetwork node is hovered over
+#'
+#' @noRd 
 population_nodes <- function(population) {
     
     infected_hosts <- population$hosts[vapply(
@@ -65,6 +109,18 @@ population_nodes <- function(population) {
     return(nodes)
 }
 
+#' Build a dataframe of edges for a population
+#'
+#' @param population A Population object
+#' 
+#' @return A dataframe with the following columns
+#'  * `from`  id of the node that the edge comes from
+#'  * `to`  id of the node that the edge goes to
+#'  * `serial_interval` The serial interval for this infector / infectee pair (NA if the infectee is an index case)
+#'  * `generation_time` The generation time for this infector / infectee pair (NA if the infectee is an index case)
+#'  * `transmission_interval` The transmission interval for this infector / infectee pair (NA if the infectee is an index case)
+#' 
+#' @noRd 
 population_edges <- function(population) {
 
     infected_hosts <- population$hosts[vapply(
@@ -95,6 +151,13 @@ population_edges <- function(population) {
     return(edges)
 }
 
+#' Build a dataframe of nodes for an outbreak
+#'
+#' @param population An Outbreak object
+#' 
+#' @return A dataframe with the same columns as population_nodes
+#' 
+#' @noRd 
 outbreak_nodes <- function(outbreak) {
 
     nodes <- do.call(rbind, lapply(outbreak$populations, population_nodes))
@@ -102,7 +165,14 @@ outbreak_nodes <- function(outbreak) {
     return(nodes)
 }
 
-outbreak_edges <- function(outbreak, serial = TRUE) {
+#' Build a dataframe of edges for an outbreak
+#'
+#' @param population An Outbreak object
+#' 
+#' @return A dataframe with the same columns as population_edges
+#' 
+#' @noRd 
+outbreak_edges <- function(outbreak) {
 
     edges <- do.call(rbind, lapply(outbreak$populations, population_edges))
 

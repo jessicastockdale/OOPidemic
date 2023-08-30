@@ -106,13 +106,14 @@ plot_compartment_dynamics <- function(
     return(figure)
 }
 
-# Get the SEIR compartment sizes for a population at a given time
-#
-# @param population A Population object
-# @param time The time that you want the compartyment sizes for
-#
-# @return A list with: time, population id, and SEIR sizes
-#
+#' Get the SEIR compartment sizes for a population at a given time
+#'
+#' @param population A Population object
+#' @param time The time that you want the compartyment sizes for
+#'
+#' @return A list with: time, population id, and SEIR sizes
+#'
+#' @noRd 
 compartment_sizes <- function(population, time) {
 
     result <- list(
@@ -127,19 +128,20 @@ compartment_sizes <- function(population, time) {
     return(result)
 }
 
-# Build the ggplot figure for displaying compartment sizes
-#
-# @param data A dataframe with the following columns: 
-#  * t: time
-#  * id: the population id (optional)
-#  * name: the name of the compartment. Options are S, E, I, and R
-#  * value: the size of the the compartment
-# @param title the title of the figure
-# @param compartment_labels the labels of the compartments (lexicographic order)
-# @param population_labels alternative labels for populations if there is more then one of them. If there is multiple and this is left as NULL then the values in the id column of `data` will be used.
-#
-# @return A ggplot figure
-#
+#' Build the ggplot figure for displaying compartment sizes
+#'
+#' @param data A dataframe with the following columns: 
+#'  * t: time
+#'  * id: the population id (optional)
+#'  * name: the name of the compartment. Options are S, E, I, and R
+#'  * value: the size of the the compartment
+#' @param title the title of the figure
+#' @param compartment_labels the labels of the compartments (lexicographic order)
+#' @param population_labels alternative labels for populations if there is more then one of them. If there is multiple and this is left as NULL then the values in the id column of `data` will be used.
+#'
+#' @return A ggplot figure
+#'
+#' @noRd
 generate_figure <- function(data, title, compartment_labels, population_labels) {
 
     if ("id" %in% names(data)) {

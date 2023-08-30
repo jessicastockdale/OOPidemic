@@ -1,5 +1,6 @@
 ###############################################################################
 # interval functions
+# Get intervals from a host
 
 incubation_time <- function(host) {
     # calculate the incubation time for this host 
@@ -67,6 +68,15 @@ transmission_interval <- function(host) {
 
 ###############################################################################
 
+#' Add a gamma distribution to a figure
+#'
+#' @param population A Population object
+#' @param figure The figure to add the distribution plot to
+#' @param interval The interval being plotted
+#' 
+#' @return A ggplot object
+#'
+#' @noRd 
 add_expected_distribution <- function(population, figure, interval) {
 
     shape <- NULL
