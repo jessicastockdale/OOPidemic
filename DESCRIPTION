@@ -10,6 +10,8 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
 Suggests: 
     base,
+    knitr,
+    rmarkdown,
     stats,
     testthat (>= 3.0.0),
     tidyr,
@@ -22,3 +24,4 @@ Imports:
     magrittr,
     R6,
     visNetwork
+VignetteBuilder: knitr
