@@ -456,7 +456,7 @@ Group <- R6::R6Class("Group",
             cat("Group: \n")
             cat("   Id:                 ", self$id, "\n", sep = "")
             cat("   Time:               ", self$time, "\n", sep = "")
-            cat("   Group Size:    ", self$size, "\n", sep = "")
+            cat("   Group Size:         ", self$size, "\n", sep = "")
             cat("   Susceptible Hosts:  ", self$susceptible_size, "\n", sep = "")
             cat("   Exposed Hosts:      ", self$exposed_size, "\n", sep = "")
             cat("   Infectious Hosts:   ", self$infectious_size, "\n", sep = "")
