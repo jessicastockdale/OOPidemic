@@ -294,7 +294,7 @@ Host <- R6::R6Class("Host",
         },
 
         #' @description 
-        #' Set a new sampling time in the future. It will be set to the current sampling time plus the `sample_freq`. If this new time is after the `Host` recovers then it is set to infinity. If `sample_schedule` is random nothing will happen. 
+        #' Set a new sampling time in the future. If `sample_schedule` is "random" then it will be moved to `Inf. Otherwise it will be set to the current sampling time plus the `sample_freq`. If this new time is after the `Host` recovers then it is set to infinity. 
         #' 
         #' @return Returns this `Host` object
         #' 
@@ -306,8 +306,14 @@ Host <- R6::R6Class("Host",
                 # if sample times are at least recovery time set sample time to infinity so that no further sampling is attempted
                 if (t >= private$recovery_time_) t <- Inf
 
-                private$sample_time_ <- t
+
+            } else {
+                # sample_shcedule is random
+                t <- Inf
+
             }
+            
+            private$sample_time_ <- t
 
             return(invisible(self))
         }

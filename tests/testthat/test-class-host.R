@@ -502,22 +502,21 @@ test_that("Host$realise() runs successfully", {
 })
 
 ###############################################################################
-# Method: Host$realise()
+# Method: Host$update_sample_time()
 ###############################################################################
 
-test_that("Host$realise() runs successfully with random sample_schedule", {
+test_that("Host$update_sample_time() runs successfully with random sample_schedule", {
 
     ref_strain <- ReferenceStrain$new("ref_strain")
     grp <- Group$new(1, ref_strain)
     host <- grp$infectious_hosts()[[1]]
 
-    sample_time <- host$sample_time
     host$update_sample_time()
 
-    expect_equal(host$sample_time, sample_time)
+    expect_equal(host$sample_time, Inf)
 })
 
-test_that("Host$realise() runs successfully with calendar sample_schedule", {
+test_that("Host$update_sample_time() runs successfully with calendar sample_schedule", {
 
     withr::with_seed(1234, {
         ref_strain <- ReferenceStrain$new("ref_strain")
@@ -538,7 +537,7 @@ test_that("Host$realise() runs successfully with calendar sample_schedule", {
     })
 })
 
-test_that("Host$realise() runs successfully with individual sample_schedule", {
+test_that("Host$update_sample_time() runs successfully with individual sample_schedule", {
 
     withr::with_seed(1234, {
         ref_strain <- ReferenceStrain$new("ref_strain")
