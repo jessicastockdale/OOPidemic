@@ -259,15 +259,15 @@ Host <- R6::R6Class("Host",
         #' 
         print = function(...) {
             cat("Host: \n")
-            cat("   Id:             ", private$id_, "\n", sep = "")
-            cat("   Group:     ", private$group_$id, "\n", sep = "")
-            cat("   Exposure Time:  ", private$exposure_time_, "\n", sep = "")
-            cat("   Infectious Time: ", private$infectious_time_, "\n", sep = "")
-            cat("   Recovery Time:  ", private$recovery_time_, "\n", sep = "")
-            cat("   Sample Time:    ", private$sample_time_, "\n", sep = "")
-            cat("   Realision Time: ", private$realisation_time_, "\n", sep = "")
-            cat("   Num Strains:    ", length(private$strains_), "\n", sep = "")
-            cat("   Frequencies:    ", paste0(private$freq_, collapse = ", "), "\n", sep = "")
+            cat("   Id:                 ", private$id_, "\n", sep = "")
+            cat("   Group:              ", private$group_$id, "\n", sep = "")
+            cat("   Exposure Time:      ", private$exposure_time_, "\n", sep = "")
+            cat("   Infectious Time:    ", private$infectious_time_, "\n", sep = "")
+            cat("   Recovery Time:      ", private$recovery_time_, "\n", sep = "")
+            cat("   Sample Time:        ", private$sample_time_, "\n", sep = "")
+            cat("   Realision Time:     ", private$realisation_time_, "\n", sep = "")
+            cat("   Num Strains:        ", length(private$strains_), "\n", sep = "")
+            cat("   Frequencies:        ", paste0(private$freq_, collapse = ", "), "\n", sep = "")
 
             invisible(self)
         },
