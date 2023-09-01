@@ -61,21 +61,7 @@ plot_compartment_dynamics <- function(
         stop("`x` must be a Population or Group object")
     }
 
-    times <- base::seq.int(0, x$time, frequency)
-    data <- data.frame(
-        t = numeric(0),
-        id = character(0),
-        S = numeric(0),
-        E = numeric(0),
-        I = numeric(0),
-        R = numeric(0)
-    )
-    
-    for (time in times) {
-        for (group in groups) {
-            data <- rbind(data, compartment_sizes(group, time))
-        }
-    }    
+    data <- compartment_sizes_for_groups(groups, x$time, frequency)
 
     # check if there is any exposed compartment
     title <- "SEIR Outbreak"
@@ -101,9 +87,64 @@ plot_compartment_dynamics <- function(
 
     figure <- generate_figure(data_long, title, compartment_labels, group_labels)
 
-    plot(figure)
-
     return(figure)
+}
+
+#' Get the SEIR compartment sizes for a group
+#'
+#' @param group A Group object
+#' @param max_time The last time to get compartment sizes for. Compartment sizes will be retrieved for times from 0 to `max_time`
+#' @param frequency Integer indicating how frequently the compartment sizes should be measured
+#'
+#' @return A list with: time, group id, and SEIR sizes
+#'
+compartment_sizes_for_group <- function(group, max_time, frequency = 1) {
+
+    stopifnot("Group" %in% class(group))
+    stopifnot(is.numeric(max_time), length(max_time) == 1, max_time %% 1 == 0)
+    stopifnot(is.numeric(frequency), length(frequency) == 1, frequency %% 1 == 0)
+
+    times <- base::seq.int(0, max_time, frequency)
+    data <- data.frame(
+        t = numeric(0),
+        id = character(0),
+        S = numeric(0),
+        E = numeric(0),
+        I = numeric(0),
+        R = numeric(0)
+    )
+
+    for (time in times) {
+        data <- rbind(data, compartment_sizes(group, time))
+    }
+
+    return(data)    
+}
+
+#' Get the SEIR compartment sizes for set of groups
+#'
+#' @param groups A vector of group objects
+#' @param max_time The last time to get compartment sizes for. Compartment sizes will be retrieved for times from 0 to `max_time`
+#' @param frequency Integer indicating how frequently the compartment sizes should be measured
+#'
+#' @return A data.frame with the columns: time, group id, and SEIR sizes and `length(groups)*time`
+#'
+compartment_sizes_for_groups <- function(groups, max_time, frequency = 1) {
+
+    stopifnot(all(vapply(
+        groups,
+        function(g) "Group" %in% class(g),
+        logical(1L)
+    )))
+    stopifnot(is.numeric(max_time), length(max_time) == 1, max_time %% 1 == 0)
+    stopifnot(is.numeric(frequency), length(frequency) == 1, frequency %% 1 == 0)
+
+    data <- NULL
+    for (group in groups) {
+        data <- rbind(data, compartment_sizes_for_group(group, max_time, frequency))
+    }
+    
+    return(data)
 }
 
 #' Get the SEIR compartment sizes for a group at a given time
@@ -147,13 +188,17 @@ generate_figure <- function(data, title, compartment_labels, group_labels) {
     if ("id" %in% names(data)) {
         # if there still is an id column then we have multiple groups to plot
 
+        # Nulling these values initially to appease R CMD check as suggested in
+        # https://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when
+        value <- name <- id <- NULL
+
         figure <- ggplot2::ggplot(
             data, 
             ggplot2::aes(
-                x = t, y = data$value, 
-                colour = data$name, 
-                linetype = data$id,
-                group = interaction(data$name, data$id)
+                x = t, y = value, 
+                colour = name, 
+                linetype = id,
+                group = interaction(name, id)
             )
         ) 
         figure <- figure + ggplot2::geom_line(lwd = 1)
@@ -161,14 +206,14 @@ generate_figure <- function(data, title, compartment_labels, group_labels) {
     } else {
         figure <- ggplot2::ggplot(
             data, 
-            ggplot2::aes(x = t, y = data$value, group = data$name, colour = data$name)
-        ) + ggplot2::geom_line(lwd = 2)
+            ggplot2::aes(x = t, y = value, group = name, colour = name)
+        ) + ggplot2::geom_line(lwd = 1)
 
     }
 
     figure <- figure + ggplot2::theme_minimal() 
     figure <- figure + ggplot2::xlab("Time")
-    figure <- figure + ggplot2::ylab("Number of individuals")
+    figure <- figure + ggplot2::ylab("Number of Hosts")
     figure <- figure + ggplot2::guides(linetype = ggplot2::guide_legend(title = "Group"))
     figure <- figure + ggplot2::scale_colour_discrete(
         name = "Compartment",
