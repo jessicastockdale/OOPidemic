@@ -1,0 +1,333 @@
+---
+title: "Simulating a disease outbreak with a single group"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Simulating a disease outbreak with a single group}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.dim = c(7, 6)
+)
+```
+
+# Introduction
+
+This vignette demonstrates how to simulate a disease outbreak in a homogenous population of individuals. It will use the Group class to run the simluation. 
+
+Before we start, we'll attach the packages we need and set a seed.
+
+```{r setup}
+library(OOPidemic)
+
+set.seed(40)
+```
+
+# Setup
+
+## Setting up a Reference Strain
+
+The first task is to set up a reference strain object. This object will store the reference genome that all strains infecting hosts will base their genomes on.
+
+We will set up a random, DNA based reference strain with a genome length of 1000, and a mutation rate of 0.0016 per nucleotide per unit time.
+
+```{r}
+ref_strain <- ReferenceStrain$new(
+  name = "ref_strain",
+  g_len = 1000,
+  mut_rate = 0.0016,
+  dna = TRUE
+)
+
+ref_strain
+```
+
+If you already have a genome that you want to use, you can use that instead of having the reference strain object randomise it. As an example example we'll create an RNA based reference strain instead:
+
+```{r}
+genome <- c("G", "G", "C", "C", "A", "A", "U", "C", "A", "U")
+genome 
+
+ref_strain_example <- ReferenceStrain$new(
+  name = "My genome",
+  genome = genome,
+  dna = FALSE
+)
+
+ref_strain_example
+```
+
+Now we have everything we need to setup a `Group` object. We'll use `ref_strain` as our reference strain for this outbreak.
+
+## Setting up a Group 
+
+We are going to run a simluation for an outbreak of a disease in a population of 200 people with one initial infective. We make the following assumptions about this disease outbreak:
+
+ 1.   This outbreak follows a Kermack-McKendrick Susceptible-Infectious-Recovered model. By default this package runs an S-Exposed-IR model outbreak but we can "switch off" the exposed compartment by setting `inc_shape = 0`. This forces all infected hosts to spend zero time in the exposed compartment.
+ 1.   Recovery rates follow a gamma distribution with shape and rate parameters of 8 and 1 respectively
+ 1.   The serial interval also follows a gamma distribution with shape = 5 and rate = 2. This assumption means that we will use serial intervals to find an infector for each infectee
+ 1.   The infectious pressure exerted by a single individual on the group is 0.2
+ 1.   Infected hosts are sampled at a random time during their infection
+ 
+```{r}
+group <- Group$new(
+  id = 1,
+  ref_strain = ref_strain,
+  init_inf = 1,
+  init_sus = 199,
+  inf_rate = 0.2,
+  inc_shape = 0, # turns off exposure compartment
+  find_infector_method = "serial",
+  si_shape = 5, si_rate = 2,
+  rec_shape = 8, rec_rate = 1
+)
+
+group
+```
+
+
+## Host and Strain Classes
+
+`group` has created 200 `Host` objects:
+
+```{r}
+group$size
+```
+
+It will have selected one of them to be the index case and left the other 199 as susceptible:
+
+```{r}
+group$susceptible_size
+
+group$infectious_size
+
+```
+
+We can print a summary of the index case:
+
+```{r}
+index_case <- group$infectious_hosts()[[1]]
+
+index_case
+```
+
+When `group` selected this host as the index case it created one `Strain` object and infected `index_case` with it. 
+
+```{r}
+index_strain <- index_case$strains[[1]]
+
+index_strain
+```
+
+`index_strain` was "spawned" at time 0, it's reference genome is carried by `ref_strain` and you can see that it doesn't have any single nucleotide polymorphisms (SNPs) since Mutation Loci and Nucleotides are empty. The lack of SNPs in this `Strain` object is because there was only one index case for this outbreak. If we had specified more then one index case and passed non-zero values for `min_init_dist` and `max_init_dist` then the `Strain` objects carried by the index cases would have some SNPs.
+
+Typically you will not create `Host` or `Strain` objects yourself. Their creation will be handled by a `Group` object. As you see above you can interact with these objects quite easily. 
+
+## Setting up a Lab 
+
+A lab object is used to collect samples from infected hosts during an outbreak. When an infected host is due to be sampled, the lab will collect a whole genome sequence from the strain that the host is carrying. Setting up a lab is very simple as no arguments are required.
+
+```{r}
+lab <- Lab$new()
+
+lab
+```
+
+# Running the Simulation
+
+To demonstrate how a simluation is run by a `Group` object we will manually run the simluation for the first few steps then we will let the `group` perform the rest of the simluation on it's own.
+
+## First Sampling
+
+First we need to sample strains in hosts that are due to be sampled. You will note from the summary of `index_case` that it's strains aren't due sampling untill two time units into the simulation. Normally, you won't have checked this in advance so you should attempt to sample hosts as an index case could randomly be assigned sampling at time zero.
+
+
+```{r} 
+lab$sample_hosts(group$hosts_due_for_sampling, group$time)
+
+lab
+```
+
+As expected `lab` still hasn't sampled any strains. 
+
+## Triggering Infections
+
+Next, we trigger a round of infections:
+
+```{r}
+group$infect()
+
+group
+```
+
+You can see that time has advanced one unit but `index_case` hasn't infected any of the susceptible hosts yet. Let's trigger another round of infections. As before, we should normally attempt to sample hosts that are due for sampling first but in this case we know there aren't any that need sampling.
+
+```{r}
+group$infect()
+
+group
+```
+
+Now we have one newly infected host. Lets take a closer look at it. To ensure we aren't accidentally selecting `index_case` we can loop through the infectious hosts until we select this new case:
+
+```{r}
+# to make sure 
+i <- 1
+new_inf <- group$infectious_hosts()[[i]]
+while (new_inf$is_index) {
+  i <- i + 1
+  new_inf <- group$infectious_hosts()[[i]]
+}
+
+new_inf
+```
+
+We can look a bit closer at `new_inf`. Who infected them?
+
+```{r}
+new_inf$infector
+```
+
+As expected it was `index_case`. We can also view who `index_case` infected:
+
+```{r}
+index_case$infectees
+```
+
+## Realisation of `Host`s and `Strain`s 
+
+During this last infection cycle something important happened to `index_case` and `index_strain`.
+
+```{r}
+index_case
+
+index_strain
+```
+
+You can see that `index_case` has a realisation time of two. This means that `index_case` triggered the realisation of any changes that happened in the strains it carries since it's previous realisation time (0 in this case). When `index_strain` was triggered to realise the changes within itself it calculated that one mutation had occurred and recorded it's locus and the new base at that locus.
+
+When `index_case` was infecting `new_infect`, `index_strain` cloned itself. This resulted in a new `Strain` object with identical SNPs to `index_strain`. `index_case` then infected `new_infect` with this new `Strain` object. 
+
+If you look at the strain `new_inf` is carrying you can see this:
+
+```{r}
+new_inf$strains[[1]]
+```
+
+We can also verify that `new_inf`'s strain's ancestor is `index_strain` :
+
+```{r}
+identical(new_inf$strains[[1]]$ancestor, index_strain)
+```
+
+## Lab Sampling
+
+If you look back at the summary of `index_case`, you can see it is now due for sampling. Lets sample the strain it's carrying (and any strains in other hosts that are also due sampling, if there are any):
+
+```{r}
+group$time == index_case$sample_time
+
+lab$sample_hosts(group$hosts_due_for_sampling, group$time)
+
+lab
+```
+
+As expected, there was only one host due for sampling:
+
+```{r}
+lab$wg_sequences
+```
+
+## Running the rest of the simulation
+
+Lets have `group` handle the rest of this disease outbreak on it's own. We'll ask it to give feedback on the status of the outbreak every 20 time units
+
+```{r}
+group$run_simulation(lab, feedback = 20)
+```
+
+When a `Group` object runs a simluation automatically it will run the simluation until there are no more hosts in the exposed or infectious compartments. 
+
+# Reviewing the Simulation
+
+## final size
+
+The final size of this outbreak is retrieved with `outbreak_size`:
+
+```{r}
+group$outbreak_size
+```
+
+## Lab Sampled every `Host`
+
+The lab collected a sample for each host that became infected:
+
+```{r}
+sample_host_ids <- vapply(lab$wg_sequences, function(wgs) wgs$host$id, numeric(1L))
+inf_host_ids <- vapply(group$recovered_hosts(), function(r_host) r_host$id, numeric(1L))
+
+all(sample_host_ids %in% inf_host_ids)
+```
+
+## Compartment Dynamics
+
+We can review the compartment dynamics for this outbreak by plotting them:
+
+```{r}
+cd_plot <- plot_compartment_dynamics(group)
+
+cd_plot
+```
+
+## Transmission Tree
+
+Or we can plot a transmission tree of the hosts:
+
+```{r}
+tt_plot <- plot_transmission_tree(group, rooted = TRUE)
+
+tt_plot
+```
+
+The transmission tree is plotted with `visNetwork` so you can interact with this plot!
+
+## Intervals
+
+We can also plot histograms of the serial interval, generation time, transmission interval, incubation time, and infectious time (with expected distributions where possible).
+
+The serial interval (time between an infectee and their infector becoming infectious)
+```{r}
+plot_intervals(group, interval = "serial", show_distribution = TRUE)
+```
+
+The transmission interval (the time between an infectee getting infected and their infector becomming infectious)
+```{r}
+plot_intervals(group)
+```
+
+The recovery time 
+```{r}
+plot_intervals(group, interval = "infectious", show_distribution = TRUE)
+```
+
+# Saving the results
+
+You can save the whole genome sequences collected by `lab` by calling `lab$save("my_directory", "vignete_example")`. Calling `save()` will build the three following dataframes:
+
+```{r}
+fasta_df <- lab$fasta_df()
+head(fasta_df)
+
+metadata_df <- lab$metadata_df()
+head(metadata_df)
+
+hostdata_df <- lab$hostdata_df()
+head(hostdata_df)
+```
+
+`metadata_df` and `hostdata_df` are both saved as csv files and `fasta_df` is saved in a fasta file. `metadata_df` stores information to relate a genome in the fasta file to a host in the `hostdata_df` csv.
+
