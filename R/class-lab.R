@@ -148,6 +148,8 @@ Lab <- R6::R6Class("Lab",
         #' 
         #' @return A dataframe
         #' 
+        #' @importFrom seqinr write.fasta
+        #' 
         save = function(directory, stem) {
             
             # check that the directory exists (create it if it doesn't)
@@ -160,7 +162,7 @@ Lab <- R6::R6Class("Lab",
             
             # save genomes
             fasta_df <- self$fasta_df()
-            fastafile <- write.fasta(
+            fastafile <- seqinr::write.fasta(
                 as.list(fasta_df$genome),
                 fasta_df$name,
                 nbchar = 80,

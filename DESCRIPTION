@@ -23,5 +23,6 @@ Imports:
     ggplot2,
     magrittr,
     R6,
+    seqinr,
     visNetwork
 VignetteBuilder: knitr
