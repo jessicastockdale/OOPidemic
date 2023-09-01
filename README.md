@@ -15,8 +15,12 @@ oriented approach.
 You can install the development version of OOPidemic like so:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("snailvet/OOPidemic")
+install.packages("devtools")
+library(devtools)
+# This repro is private so generate a personal access token in github to allow you to install it
+# read the auth_token parameter details in the install_github docs for more details
+?install_github 
+install_github("snailvet/OOPidemic", auth_token = [Your personal access token])
 ```
 
 ## Example
@@ -47,21 +51,21 @@ group$run_simulation(lab)
 #>    Id:                 1
 #>    Time:               10
 #>    Group Size:         100
-#>    Susceptible Hosts:  29
-#>    Exposed Hosts:      30
+#>    Susceptible Hosts:  26
+#>    Exposed Hosts:      29
 #>    Infectious Hosts:   37
-#>    Recovered Hosts:    4
+#>    Recovered Hosts:    8
 #> Group: 
 #>    Id:                 1
 #>    Time:               20
 #>    Group Size:         100
 #>    Susceptible Hosts:  0
 #>    Exposed Hosts:      0
-#>    Infectious Hosts:   12
-#>    Recovered Hosts:    88
+#>    Infectious Hosts:   11
+#>    Recovered Hosts:    89
 #> Group: 
 #>    Id:                 1
-#>    Time:               27
+#>    Time:               25
 #>    Group Size:         100
 #>    Susceptible Hosts:  0
 #>    Exposed Hosts:      0
