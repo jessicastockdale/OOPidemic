@@ -458,7 +458,7 @@ Group <- R6::R6Class("Group",
             cat("   Time:               ", self$time, "\n", sep = "")
             cat("   Group Size:         ", self$size, "\n", sep = "")
             cat("   Susceptible Hosts:  ", self$susceptible_size, "\n", sep = "")
-            if (inc_shape != 0) {
+            if (self$inc_shape != 0) {
                 # only print exposed compartment size if we are running a SEIR outbreak
                 cat("   Exposed Hosts:      ", self$exposed_size, "\n", sep = "")
             }
