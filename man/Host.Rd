@@ -299,7 +299,7 @@ Returns this \code{Host} object
 \if{html}{\out{<a id="method-Host-update_sample_time"></a>}}
 \if{latex}{\out{\hypertarget{method-Host-update_sample_time}{}}}
 \subsection{Method \code{update_sample_time()}}{
-Set a new sampling time in the future. It will be set to the current sampling time plus the \code{sample_freq}. If this new time is after the \code{Host} recovers then it is set to infinity. If \code{sample_schedule} is random nothing will happen.
+Set a new sampling time in the future. If \code{sample_schedule} is "random" then it will be moved to \verb{Inf. Otherwise it will be set to the current sampling time plus the }sample_freq\verb{. If this new time is after the }Host` recovers then it is set to infinity.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Host$update_sample_time()}\if{html}{\out{</div>}}
 }
