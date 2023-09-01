@@ -39,6 +39,12 @@ node_shape <- function(host) {
 #'
 #' @noRd 
 node_title <- function(host) {
+
+    infector_id <- {
+        if (host$is_index) "Index case"
+        else host$infector$id
+    }
+
     paste0(
         "<p>",
             "<b>ID:</b>         ", host$id, "<br>",
@@ -46,7 +52,7 @@ node_title <- function(host) {
             "<b>Exposure Time:</b> ", host$exposure_time, "<br>",
             "<b>Infectious Time:</b> ", host$infectious_time, "<br>",
             "<b>Recovery Time:</b> ", host$recovery_time, "<br>",
-            "<b>Infector:</b> ", host$infector_id, "<br>",
+            "<b>Infector:</b> ", infector_id, "<br>",
             "<b>Infectees:</b> ", paste0(vapply(host$infectees, function(i) i$id, numeric(1L)), collapse = ", "), "<br>",
         "</p>"
     )
@@ -317,12 +323,18 @@ plot_transmission_tree <- function(x, rooted = TRUE, edge_length = "transmission
         edges$length <- edges$transmission_interval
     }
     
-    print(nodes$id)
-    print(edges)
     graph <- visNetwork::visNetwork(nodes, edges, width = "100%") %>%
         visNetwork::visEdges(arrows = "to") %>%
         visNetwork::visInteraction(navigationButtons = TRUE) %>%
-        visNetwork::visPhysics(stabilization = FALSE)
+        visNetwork::visPhysics(stabilization = FALSE) %>%
+        visNetwork::addFontAwesome() %>%
+        visNetwork::visLegend(
+            width = 0.1,
+            addNodes = list(
+                list(label = "Index\nCases", color = "grey", shape = "square")
+            ),
+            useGroups = "Outbreak" %in% class(x)
+        )
 
     if (rooted) {
         graph <- graph %>% visNetwork::visHierarchicalLayout()
