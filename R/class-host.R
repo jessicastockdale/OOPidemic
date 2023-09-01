@@ -330,7 +330,7 @@ Host <- R6::R6Class("Host",
 
                 if (!is.null(private$infector_)) {
                     infector_id <- private$infector_$id
-                    infector_group <- private$infector_$group
+                    infector_group <- private$infector_$group$id
                 } else {
                     infector_id <- NA
                     infector_group <- NA
