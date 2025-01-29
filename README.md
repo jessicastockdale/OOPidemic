@@ -7,7 +7,7 @@
 
 <!-- badges: end -->
 
-The goal of OOPidemic is to simulate an disease epidemic using an object
+The goal of OOPidemic is to simulate a disease epidemic using an object
 oriented approach.
 
 ## Installation
@@ -17,10 +17,8 @@ You can install the development version of OOPidemic like so:
 ``` r
 install.packages("devtools")
 library(devtools)
-# This repro is private so generate a personal access token in github to allow you to install it
-# read the auth_token parameter details in the install_github docs for more details
 ?install_github 
-install_github("snailvet/OOPidemic", auth_token = [Your personal access token])
+install_github("jessicastockdale/OOPidemic")
 ```
 
 ## Example
