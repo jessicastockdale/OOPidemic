@@ -22,7 +22,7 @@ The goal of OOPidemic is to simulate a disease epidemic using an object oriented
 
 ## Installation
 
-You can install the development version of OOPidemic like so:
+You can install OOPidemic like so:
 
 ``` r
 install.packages("devtools")
