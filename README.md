@@ -12,7 +12,7 @@ oriented approach.
 
 ## Installation
 
-You can install the development version of OOPidemic like so:
+You can install OOPidemic like so:
 
 ``` r
 install.packages("devtools")
