@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# OOPidemic
+# OOPidemic - an object-oriented outbreak simulator
 
 <!-- badges: start -->
 
