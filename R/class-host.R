@@ -240,7 +240,7 @@ Host <- R6::R6Class("Host",
 
             } else {
                 intervals <- private$group_$group_interval_stack
-                private$infectious_time_ <- time + ceiling(intervals$inc)
+                private$infectious_time_ <- time + round(intervals$inc)
                 infector_interval <- intervals$infector_interval
 
             }
@@ -491,7 +491,7 @@ Host <- R6::R6Class("Host",
         # 
         generate_recovery_time = function() {
             # generate a recovery time
-            private$infectious_time_ + ceiling(stats::rgamma(
+            private$infectious_time_ + round(stats::rgamma(
                 1, 
                 private$group_$rec_shape, 
                 private$group_$rec_rate
