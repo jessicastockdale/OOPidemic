@@ -439,7 +439,7 @@ test_that("Host$prepare_for_infection() runs successfully with initial = FALSE",
 
     expect_equal(host$exposure_time, time)
     expect_equal(host$realisation_time, time)
-    expect_equal(host$infectious_time, time + ceiling(intervals$inc))
+    expect_equal(host$infectious_time, time + round(intervals$inc))
     expect_false(is.na(host$recovery_time))
     expect_true(host$recovery_time >= host$infectious_time)
     expect_false(is.na(host$sample_time))
